@@ -57,18 +57,18 @@ export function AILabPanel({ explanation, prediction, isLoading, onRun }: AILabP
 
   return (
     <div className="space-y-8">
-      <section className="kombai-card kombai-card-purple p-7 md:p-9">
-        <div className="mb-8 flex items-start gap-4">
+      <section className="kombai-card kombai-card-purple p-5 md:p-9">
+        <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row md:mb-8">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-violet/35 bg-violet/15 text-violet-200">
             <FlaskConical size={19} />
           </span>
           <div>
-            <h2 className="text-2xl font-black text-white">Da Regra ao Machine Learning</h2>
+            <h2 className="text-2xl font-black leading-tight text-white">Da Regra ao Machine Learning</h2>
             <p className="mt-2 text-slate-400">Como evoluímos de regras fixas para inteligência adaptativa</p>
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
           <ModelModeCard
             mode="Antes"
             title="Regras Manuais"
@@ -95,7 +95,7 @@ export function AILabPanel({ explanation, prediction, isLoading, onRun }: AILabP
           </div>
           <span className="kombai-chip kombai-chip-cyan">12 variáveis ativas</span>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
           {fallbackFeatures.map(([title, text, weight, icon]) => (
             <FeatureModelCard key={title} title={title} text={text} weight={weight} icon={icon} />
           ))}
@@ -103,12 +103,12 @@ export function AILabPanel({ explanation, prediction, isLoading, onRun }: AILabP
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <section className="kombai-card p-6">
+        <section className="kombai-card p-5 md:p-6">
           <div className="mb-5">
             <h2 className="text-2xl font-black text-white">Importância das Variáveis</h2>
             <p className="mt-2 text-slate-400">Quais variáveis mais impactam o Score de Oportunidade?</p>
           </div>
-          <div className="h-80">
+          <div className="h-72 md:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={importanceData} layout="vertical" margin={{ left: 12, right: 24 }}>
                 <CartesianGrid stroke="rgba(255,255,255,0.08)" horizontal={false} />
@@ -121,7 +121,7 @@ export function AILabPanel({ explanation, prediction, isLoading, onRun }: AILabP
           </div>
         </section>
 
-        <section className="kombai-card p-6">
+        <section className="kombai-card p-5 md:p-6">
           <h2 className="text-2xl font-black text-white">Configuração do Modelo</h2>
           <p className="mt-2 text-slate-400">Arquitetura e parâmetros de treinamento</p>
           <div className="mt-6 space-y-3">
@@ -140,7 +140,7 @@ export function AILabPanel({ explanation, prediction, isLoading, onRun }: AILabP
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
-        <section className="kombai-card p-6">
+        <section className="kombai-card p-5 md:p-6">
           <h2 className="text-2xl font-black text-white">Métricas de Performance</h2>
           <p className="mt-2 text-slate-400">Avaliação no conjunto de teste (20% dos dados)</p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -153,10 +153,10 @@ export function AILabPanel({ explanation, prediction, isLoading, onRun }: AILabP
           </div>
         </section>
 
-        <section className="kombai-card kombai-card-green p-6">
+        <section className="kombai-card kombai-card-green p-5 md:p-6">
           <h2 className="text-2xl font-black text-white">Como o Score é Calculado?</h2>
           <p className="mt-2 text-slate-400">Exemplo passo a passo: {prediction?.product_name ?? "Mini Impressora Térmica Portátil"}</p>
-          <div className="mt-6 grid gap-3 md:grid-cols-5">
+          <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
             <PredictionMetric label="Score" value={prediction ? percent(prediction.opportunity_score) : "87%"} />
             <PredictionMetric label="Conversão" value={prediction ? percent(prediction.conversion_probability) : "4.2%"} />
             <PredictionMetric label="Margem" value={prediction ? percent(prediction.estimated_margin) : "38%"} />
@@ -176,21 +176,21 @@ function ModelModeCard({ mode, title, tone, code, summary, items, positive = fal
   const isGreen = tone === "green";
   const Icon = positive ? Check : X;
   return (
-    <article className={`rounded-xl border p-6 ${isGreen ? "border-emerald-300/24 bg-emerald-300/[0.055]" : "border-amber-300/24 bg-amber-300/[0.055]"}`}>
-      <div className="mb-5 flex items-center gap-3">
+    <article className={`rounded-xl border p-4 md:p-6 ${isGreen ? "border-emerald-300/24 bg-emerald-300/[0.055]" : "border-amber-300/24 bg-amber-300/[0.055]"}`}>
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <span className={isGreen ? "kombai-chip kombai-chip-green uppercase" : "kombai-chip kombai-chip-orange uppercase"}>{mode}</span>
         <h3 className={isGreen ? "font-black text-mint" : "font-black text-amber-300"}>{title}</h3>
         {isGreen && <span className="ml-auto kombai-chip kombai-chip-green">Ativo</span>}
       </div>
       {code && (
-        <pre className="mb-5 overflow-x-auto rounded-lg border border-white/10 bg-black/[0.38] p-5 font-mono text-sm leading-7 text-cyan-100">
+        <pre className="mb-5 overflow-x-auto rounded-lg border border-white/10 bg-black/[0.38] p-4 font-mono text-xs leading-6 text-cyan-100 md:p-5 md:text-sm md:leading-7">
           <code>{code}</code>
         </pre>
       )}
       {summary && <p className="mb-5 rounded-lg border border-emerald-300/15 bg-black/[0.18] p-4 leading-7 text-cyan-100">{summary}</p>}
       <ul className="space-y-3">
         {items.map((item) => (
-          <li key={item} className="flex items-center gap-3 text-sm font-semibold text-white">
+          <li key={item} className="flex items-start gap-3 text-sm font-semibold text-white">
             <Icon size={15} className={isGreen ? "text-mint" : "text-red-400"} />
             {item}
           </li>
@@ -203,7 +203,7 @@ function ModelModeCard({ mode, title, tone, code, summary, items, positive = fal
 function FeatureModelCard({ title, text, weight, icon }: { title: string; text: string; weight: string; icon: ReactNode }) {
   const weightClass = weight === "Alta" ? "text-mint" : weight === "Baixa" ? "text-amber-300" : "text-cyan-200";
   return (
-    <article className="kombai-card p-5">
+    <article className="kombai-card p-4 md:p-5">
       <div className="flex items-start gap-4">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-cyan-300/20 bg-cyan-300/10 text-cyan-200">
           {icon}

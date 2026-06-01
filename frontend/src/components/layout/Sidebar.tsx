@@ -57,7 +57,7 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
   return (
     <aside
       className={cn(
-        "fixed bottom-4 left-3 right-3 z-30 border border-white/10 bg-[#0a0d12]/95 shadow-[18px_0_80px_rgba(0,0,0,0.28)] backdrop-blur-2xl lg:bottom-auto lg:right-auto lg:top-0 lg:h-screen lg:border-y-0 lg:border-l-0",
+        "fixed bottom-3 left-3 right-3 z-30 border border-white/10 bg-[#080b10]/98 shadow-[18px_0_80px_rgba(0,0,0,0.28)] backdrop-blur-2xl lg:bottom-auto lg:right-auto lg:top-0 lg:h-screen lg:border-y-0 lg:border-l-0 lg:bg-[#0a0d12]/95",
         isCompact ? "lg:w-16" : "lg:w-60",
         "rounded-lg lg:rounded-none",
       )}
@@ -66,7 +66,7 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
         <button
           onClick={() => onNavigate("landing")}
           aria-label="ProductHunter"
-          className={cn("flex items-center gap-3 rounded-lg transition hover:bg-white/[0.04]", isCompact ? "justify-center p-0 lg:h-10" : "p-2")}
+          className={cn("hidden items-center gap-3 rounded-lg transition hover:bg-white/[0.04] lg:flex", isCompact ? "justify-center p-0 lg:h-10" : "p-2")}
         >
           <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-200/25 bg-[linear-gradient(135deg,#f8fafc,#d9f99d_48%,#34d399)] text-[#07100d] shadow-[0_0_30px_rgba(52,211,153,0.22)]">
             <Store size={18} strokeWidth={2.4} />
@@ -84,7 +84,7 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
 
         {!isCompact && <div className="hidden h-px bg-white/10 lg:block" />}
 
-        <nav className={cn("grid flex-1 grid-cols-6 gap-1 lg:flex lg:flex-col", isCompact ? "lg:mt-7 lg:gap-3" : "lg:mt-5 lg:gap-2")}>
+        <nav className={cn("grid flex-1 grid-cols-5 gap-1 lg:flex lg:flex-col", isCompact ? "lg:mt-7 lg:gap-3" : "lg:mt-5 lg:gap-2")}>
           {!isCompact && (
             <p className="hidden px-1 pb-3 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 lg:block">
               Navegação
@@ -102,6 +102,7 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
                 title={item.label}
                 className={cn(
                   "group relative flex h-11 items-center overflow-hidden rounded-lg text-sm font-bold transition duration-300 disabled:cursor-not-allowed disabled:opacity-65",
+                  !item.key && "hidden lg:flex",
                   isCompact ? "justify-center" : "justify-center px-3 lg:justify-start lg:gap-3",
                   isActive
                     ? "border border-cyan-300/28 bg-cyan-300/[0.12] text-cyan-200 shadow-[0_0_24px_rgba(98,230,255,0.12)]"
@@ -111,7 +112,7 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
                 {isActive && !isCompact && (
                   <motion.span
                     layoutId="kombai-sidebar-rail"
-                    className="absolute left-0 top-2 h-7 w-1 rounded-r-full bg-cyan-300"
+                    className="absolute left-0 top-2 hidden h-7 w-1 rounded-r-full bg-cyan-300 lg:block"
                     transition={{ type: "spring", stiffness: 420, damping: 34 }}
                   />
                 )}

@@ -30,7 +30,7 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
   return (
     <div className="space-y-5">
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-        <GlassCard className="p-6" variant="strong" interactive>
+        <GlassCard className="p-4 md:p-6" variant="strong" interactive>
           <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0">
               <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -39,7 +39,7 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
                   {item.product.niche_label}
                 </span>
               </div>
-              <h2 className="text-3xl font-extrabold leading-tight text-white">{item.product.name}</h2>
+              <h2 className="text-2xl font-extrabold leading-tight text-white md:text-3xl">{item.product.name}</h2>
               <p className="mt-4 text-sm leading-7 text-mist">{item.explanation}</p>
             </div>
             <OpportunityScoreRing score={item.opportunity_score} size="lg" />
@@ -52,7 +52,7 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
           </div>
         </GlassCard>
 
-        <GlassCard className="p-6" variant="electric" interactive>
+        <GlassCard className="p-4 md:p-6" variant="electric" interactive>
           <h3 className="text-xl font-extrabold text-white">Indicadores operacionais</h3>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <Detail icon={<Package size={18} />} label="Categoria" value={item.product.category} />
@@ -67,12 +67,12 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1fr_1fr_410px]">
-        <GlassCard className="p-5" variant="mint" interactive>
+        <GlassCard className="p-4 md:p-5" variant="mint" interactive>
           <p className="section-label">margem</p>
           <h3 className="mt-1 text-xl font-extrabold text-white">Economia unitária</h3>
           <MarginChart data={marginData} />
         </GlassCard>
-        <GlassCard className="p-5" variant="electric" interactive>
+        <GlassCard className="p-4 md:p-5" variant="electric" interactive>
           <p className="section-label">conversão</p>
           <h3 className="mt-1 text-xl font-extrabold text-white">Sinais de venda</h3>
           <ConversionChart data={conversionData} />
@@ -85,7 +85,7 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
 
 function Metric({ label, value, tone = "text-white" }: { label: string; value: string; tone?: string }) {
   return (
-    <div className="metric-panel p-4">
+    <div className="metric-panel p-3 md:p-4">
       <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-mist">{label}</p>
       <p className={`mono-number mt-2 text-lg font-extrabold ${tone}`}>{value}</p>
     </div>
@@ -94,7 +94,7 @@ function Metric({ label, value, tone = "text-white" }: { label: string; value: s
 
 function Detail({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="metric-panel p-4">
+    <div className="metric-panel p-3 md:p-4">
       <div className="mb-3 inline-flex rounded-md bg-white/[0.06] p-2 text-electric">{icon}</div>
       <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-mist">{label}</p>
       <p className="mt-2 text-base font-extrabold text-white">{value}</p>

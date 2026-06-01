@@ -16,11 +16,13 @@ export function ProfitSimulator({ item }: ProfitSimulatorProps) {
             <Calculator size={20} />
           </span>
           <div>
-            <h1 className="text-xl font-black text-white">Simulador de Lucro</h1>
+            <h1 className="text-xl font-black leading-tight text-white">Simulador de Lucro</h1>
             <p className="mt-1 text-sm text-slate-500">Calcule sua margem real antes de apostar seu estoque</p>
           </div>
         </div>
-        <span className="kombai-chip kombai-chip-green hidden md:inline-flex">{item?.product.name ?? "Mini Impressora Termica"}</span>
+        <div className="hidden md:block">
+          <span className="kombai-chip kombai-chip-green">{item?.product.name ?? "Mini Impressora Termica"}</span>
+        </div>
       </header>
 
       <div className="py-7">

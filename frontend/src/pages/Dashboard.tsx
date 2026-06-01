@@ -70,7 +70,7 @@ export function Dashboard() {
             ProductHunter <span className="mx-2 text-slate-700">/</span>
             <span className="font-black text-white">Dashboard</span>
           </p>
-          <h1 className="mt-2 text-2xl font-black tracking-[-0.01em] text-white md:text-3xl">Visão Geral do Mercado</h1>
+          <h1 className="mt-2 text-[1.7rem] font-black leading-tight tracking-[-0.01em] text-white md:text-3xl">Visão Geral do Mercado</h1>
         </div>
         <div className="hidden items-center gap-3 md:flex">
           <span className="text-sm font-semibold text-slate-500">Sab, 31 Mai 2025</span>
@@ -105,7 +105,7 @@ export function Dashboard() {
                 <option>90 dias</option>
               </select>
             </div>
-            <div className="h-[460px]">
+            <div className="h-[300px] md:h-[460px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={trendSeries} margin={{ left: -14, right: 8, top: 14, bottom: 0 }}>
                   <defs>
@@ -130,7 +130,7 @@ export function Dashboard() {
           <section className="kombai-card p-5">
             <h2 className="text-lg font-black text-white">Comparação Marketplaces</h2>
             <p className="mt-1 text-sm text-slate-500">Performance por plataforma</p>
-            <div className="mt-8 h-[360px]">
+            <div className="mt-8 h-[300px] md:h-[360px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={radarData}>
                   <PolarGrid stroke="rgba(255,255,255,0.08)" />
@@ -168,7 +168,7 @@ export function Dashboard() {
           <section className="kombai-card p-5">
             <h2 className="text-lg font-black text-white">Risco × Margem</h2>
             <p className="mt-1 text-sm text-slate-500">Produtos no quadrante ideal: alta margem, baixo risco</p>
-            <div className="mt-5 h-[310px]">
+            <div className="mt-5 h-[260px] md:h-[310px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ left: -16, right: 18, top: 18, bottom: 0 }}>
                   <CartesianGrid stroke="rgba(255,255,255,0.07)" />
@@ -237,14 +237,14 @@ export function Dashboard() {
 
 function DashboardStat({ icon, value, label, detail, badge }: { icon: ReactNode; value: string; label: string; detail: string; badge: string }) {
   return (
-    <article className="kombai-card kombai-card-soft p-5">
+    <article className="kombai-card kombai-card-soft p-4 md:p-5">
       <div className="flex items-start justify-between gap-4">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-cyan-300/25 bg-cyan-300/10 text-cyan-200">
           {icon}
         </span>
         <span className="kombai-chip kombai-chip-green">{badge}</span>
       </div>
-      <p className="mt-6 font-mono text-4xl font-black text-white">{value}</p>
+      <p className="mt-5 font-mono text-3xl font-black text-white md:mt-6 md:text-4xl">{value}</p>
       <p className="mt-1 text-sm font-semibold text-slate-500">{label}</p>
       <p className="mt-1 text-sm text-slate-500">{detail}</p>
     </article>

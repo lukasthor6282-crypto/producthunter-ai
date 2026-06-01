@@ -39,19 +39,19 @@ export function RecommendationResults({ data, selectedItem, onSelect, onEditProf
           <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
             <span>Perfil:</span>
             <ProfileChip tone="cyan">{profileOptionLabel("operation_type", profile.operation_type)}</ProfileChip>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <ProfileChip tone="orange">{profileOptionLabel("marketplace", profile.marketplace)}</ProfileChip>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <ProfileChip tone="green">{profileOptionLabel("niche", profile.niche)}</ProfileChip>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <ProfileChip tone="violet">{shortGoal(profileOptionLabel("goal", profile.goal))}</ProfileChip>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <ProfileChip tone="orange">{profileOptionLabel("investment_range", profile.investment_range).replace("R$ ", "R$")}</ProfileChip>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <ProfileChip>{profileOptionLabel("experience_level", profile.experience_level)}</ProfileChip>
           </div>
-          <h1 className="mt-5 text-4xl font-black leading-tight text-white">Ranking de Oportunidades</h1>
-          <p className="mt-2 text-slate-500">{items.length} produtos encontrados · Ordenados por Score de Oportunidade</p>
+          <h1 className="mt-4 text-3xl font-black leading-tight text-white md:mt-5 md:text-4xl">Ranking de Oportunidades</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500 md:text-base">{items.length} produtos encontrados · Ordenados por Score de Oportunidade</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="kombai-chip"><Filter size={14} />Filtrar</button>
@@ -74,8 +74,8 @@ export function RecommendationResults({ data, selectedItem, onSelect, onEditProf
           </div>
         </aside>
 
-        <section className="kombai-card kombai-card-purple border-l-4 border-l-violet p-6">
-          <div className="flex items-start gap-4">
+        <section className="kombai-card kombai-card-purple border-l-4 border-l-violet p-4 md:p-6">
+          <div className="flex flex-col items-start gap-4 sm:flex-row">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-violet/40 bg-violet/15 text-violet-200">
               <Bot size={19} />
             </span>
@@ -85,7 +85,7 @@ export function RecommendationResults({ data, selectedItem, onSelect, onEditProf
                 <span className="h-1.5 w-1.5 rounded-full bg-mint" />
                 <span className="text-xs text-slate-600">há 2 min</span>
               </div>
-              <p className="text-base font-medium leading-8 text-slate-400">
+              <p className="text-sm font-medium leading-7 text-slate-400 md:text-base md:leading-8">
                 Com base no seu perfil de <strong className="text-white">{profileOptionLabel("operation_type", profile.operation_type).toLowerCase()}</strong>{" "}
                 <strong className="text-white">{profileOptionLabel("experience_level", profile.experience_level).toLowerCase()}</strong> no nicho de{" "}
                 <strong className="text-cyan-200">{profileOptionLabel("niche", profile.niche).toLowerCase()}</strong> na{" "}
@@ -116,8 +116,8 @@ export function RecommendationResults({ data, selectedItem, onSelect, onEditProf
 
 function BestProductCard({ item, rank, onOpenDetail, onSimulate }: { item: RecommendationItem; rank: number; onOpenDetail?: () => void; onSimulate?: () => void }) {
   return (
-    <article className="kombai-card border-cyan-300/24 bg-[#0b111b]/92 p-7">
-      <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+    <article className="kombai-card border-cyan-300/24 bg-[#0b111b]/92 p-4 md:p-7">
+      <div className="mb-6 flex flex-col gap-5 lg:mb-8 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex items-start gap-5">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 text-xl font-black text-[#07090d] shadow-[0_0_36px_rgba(248,184,92,0.28)]">
             1
@@ -128,16 +128,16 @@ function BestProductCard({ item, rank, onOpenDetail, onSimulate }: { item: Recom
               <span className="kombai-chip kombai-chip-orange">{item.product.marketplace_label}</span>
               <span className="kombai-chip">{item.product.niche_label}</span>
             </div>
-            <h2 className="text-3xl font-black leading-tight text-white">{item.product.name}</h2>
+            <h2 className="text-2xl font-black leading-tight text-white md:text-3xl">{item.product.name}</h2>
           </div>
         </div>
-        <div className="text-right">
-          <p className="font-mono text-5xl font-black text-cyan-200">{item.opportunity_score.toFixed(0)}</p>
+        <div className="text-left lg:text-right">
+          <p className="font-mono text-4xl font-black text-cyan-200 md:text-5xl">{item.opportunity_score.toFixed(0)}</p>
           <p className="text-xs font-black uppercase text-slate-500">/100 score</p>
         </div>
       </div>
 
-      <div className="grid border-y border-white/10 md:grid-cols-5">
+      <div className="grid grid-cols-2 border-y border-white/10 sm:grid-cols-3 md:grid-cols-5">
         <HeroMetric label="Margem" value={percent(item.estimated_margin_percent)} tone="text-mint" />
         <HeroMetric label="Lucro/Unid" value={brl.format(item.estimated_profit)} />
         <HeroMetric label="Conversão" value={percent(item.conversion_probability, 1)} tone="text-cyan-200" />
@@ -182,7 +182,7 @@ function ResultRow({ item, rank, selected, onClick }: { item: RecommendationItem
           <h3 className="text-lg font-black text-white">{item.product.name}</h3>
           <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">"{item.explanation}"</p>
         </div>
-        <div className="grid min-w-[300px] grid-cols-4 gap-2">
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:min-w-[300px] sm:grid-cols-4">
           <MiniMetric label="Score" value={item.opportunity_score.toFixed(0)} />
           <MiniMetric label="Margem" value={percent(item.estimated_margin_percent)} />
           <MiniMetric label="Lucro" value={brl.format(item.estimated_profit)} />
@@ -195,8 +195,8 @@ function ResultRow({ item, rank, selected, onClick }: { item: RecommendationItem
 
 function HeroMetric({ label, value, tone = "text-white" }: { label: string; value: string; tone?: string }) {
   return (
-    <div className="border-white/10 p-5 text-center md:border-r md:last:border-r-0">
-      <p className={`font-mono text-3xl font-black ${tone}`}>{value}</p>
+    <div className="border-white/10 p-4 text-center md:border-r md:p-5 md:last:border-r-0">
+      <p className={`font-mono text-2xl font-black md:text-3xl ${tone}`}>{value}</p>
       <p className="mt-2 text-[11px] font-black uppercase text-slate-500">{label}</p>
     </div>
   );
@@ -234,7 +234,7 @@ function ProfileChip({ children, tone = "default" }: { children: ReactNode; tone
           : tone === "violet"
             ? "border-violet/35 bg-violet/15 text-violet-200"
             : "border-white/10 bg-white/[0.035] text-slate-300";
-  return <span className={`inline-flex w-fit rounded-full border px-3 py-1 text-sm font-black ${toneClass}`}>{children}</span>;
+  return <span className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-black md:text-sm ${toneClass}`}>{children}</span>;
 }
 
 function riskLabel(score: number) {

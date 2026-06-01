@@ -141,19 +141,19 @@ export function RecommendationForm({ onSubmit, isLoading = false }: Recommendati
         <input key={field} type="hidden" {...register(field)} />
       ))}
 
-      <div className="flex h-12 items-center justify-between border-b border-white/10 bg-white/[0.03] px-6">
-        <div className="flex items-center gap-2">
+      <div className="flex h-12 items-center justify-between border-b border-white/10 bg-white/[0.03] px-4 md:px-6">
+        <div className="flex min-w-0 items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-white/18" />
           <span className="h-2.5 w-2.5 rounded-full bg-white/12" />
           <span className="h-2.5 w-2.5 rounded-full bg-white/8" />
-          <span className="ml-3 text-sm font-black text-slate-600">consulta.perfil — ProductHunter</span>
+          <span className="ml-2 truncate text-xs font-black text-slate-600 sm:text-sm md:ml-3">consulta.perfil — ProductHunter</span>
         </div>
         <span className="hidden text-xs font-semibold text-slate-600 md:inline">Estimativa: 30 segundos</span>
       </div>
 
-      <div className="space-y-10 p-6 md:p-10">
+      <div className="space-y-7 p-4 md:space-y-10 md:p-10">
         <FormSection index="01" title="Eu sou" required error={errors.operation_type?.message}>
-          <div className="grid gap-3 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
             {profileOptions.operation_type.map((option) => (
               <ChoiceButton
                 key={option.value}
@@ -199,7 +199,7 @@ export function RecommendationForm({ onSubmit, isLoading = false }: Recommendati
 
         <div className="grid gap-10 xl:grid-cols-[1fr_0.96fr]">
           <FormSection index="04" title="Meu objetivo" error={errors.goal?.message}>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-2">
               {goalOrder.map((value) => profileOptions.goal.find((option) => option.value === value)).filter(Boolean).map((option) => (
                 <ChoiceButton
                   key={option!.value}
@@ -216,7 +216,7 @@ export function RecommendationForm({ onSubmit, isLoading = false }: Recommendati
 
           <div className="space-y-8">
             <FormSection index="05" title="Nível de experiência" error={errors.experience_level?.message}>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {profileOptions.experience_level.map((option) => (
                   <ChoiceButton
                     key={option.value}
@@ -292,8 +292,8 @@ export function RecommendationForm({ onSubmit, isLoading = false }: Recommendati
 
 function FormSection({ index, title, required = false, error, children }: { index: string; title: string; required?: boolean; error?: string; children: ReactNode }) {
   return (
-    <section className="border-b border-white/10 pb-9 last:border-b-0">
-      <div className="mb-5 flex items-center gap-4">
+    <section className="border-b border-white/10 pb-7 last:border-b-0 md:pb-9">
+      <div className="mb-4 flex flex-wrap items-center gap-3 md:mb-5 md:gap-4">
         <span className="font-mono text-xs font-black text-slate-600">{index}</span>
         <h2 className="font-black text-white">{title}</h2>
         {required && <span className="text-xs font-black text-rose-400">obrigatório</span>}
@@ -310,8 +310,8 @@ function ChoiceButton({ active, onClick, icon, children, compact = false, tall =
       type="button"
       onClick={onClick}
       className={cn(
-        "flex min-h-11 items-center justify-center gap-3 rounded-lg border px-4 py-3 text-sm font-black transition duration-200",
-        tall && "min-h-[74px] justify-start p-4 text-left",
+        "flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-3 text-center text-sm font-black transition duration-200 md:gap-3 md:px-4",
+        tall && "min-h-[64px] justify-start p-3 text-left md:min-h-[74px] md:p-4",
         compact && "min-h-10",
         active
           ? "border-cyan-300/55 bg-cyan-300/[0.11] text-cyan-200 shadow-[0_0_30px_rgba(98,230,255,0.12)]"

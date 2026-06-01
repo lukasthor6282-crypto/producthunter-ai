@@ -82,15 +82,15 @@ export function ProfitSimulationCard({ item }: ProfitSimulationCardProps) {
   const backendProfit = simulationQuery.data?.net_monthly_profit ?? simulationQuery.data?.monthly_profit;
 
   return (
-    <div className="grid gap-7 xl:grid-cols-[0.94fr_1fr]">
-      <section className="kombai-card p-7">
+    <div className="grid gap-5 md:gap-7 xl:grid-cols-[0.94fr_1fr]">
+      <section className="kombai-card p-4 md:p-7">
         {!product && (
           <div className="mb-6 rounded-lg border border-cyan-300/18 bg-cyan-300/[0.055] p-4 text-sm leading-6 text-slate-400">
             Selecione um produto no ranking para carregar dados reais da API. Os valores abaixo seguem o exemplo visual do canvas.
           </div>
         )}
 
-        <div className="space-y-8">
+        <div className="space-y-7 md:space-y-8">
           <ControlGroup icon={<Package size={15} />} title="Preco e custo">
             <MoneyInput label="Preço de Venda" value={salePrice} onChange={setSalePrice} />
             <MoneyInput label="Custo do Produto" value={productCost} onChange={setProductCost} />
@@ -121,9 +121,9 @@ export function ProfitSimulationCard({ item }: ProfitSimulationCardProps) {
       </section>
 
       <div className="space-y-5">
-        <section className="kombai-card kombai-card-green p-7">
+        <section className="kombai-card kombai-card-green p-5 md:p-7">
           <p className="text-sm font-black uppercase tracking-[0.16em] text-slate-400">Lucro mensal estimado</p>
-          <p className="mt-4 font-mono text-6xl font-black leading-none text-mint md:text-7xl">{brl.format(totals.netProfit)}</p>
+          <p className="mt-4 font-mono text-4xl font-black leading-none text-mint md:text-7xl">{brl.format(totals.netProfit)}</p>
           <p className="mt-3 text-slate-400">com {units} unidades vendidas/mes</p>
 
           <div className="mt-8 space-y-1">
@@ -155,9 +155,9 @@ export function ProfitSimulationCard({ item }: ProfitSimulationCardProps) {
           )}
         </section>
 
-        <section className="kombai-card p-6">
+        <section className="kombai-card p-5 md:p-6">
           <h2 className="text-sm font-black uppercase tracking-[0.16em] text-cyan-200">Comparativo por escala</h2>
-          <div className="mt-6 h-[410px]">
+          <div className="mt-6 h-[300px] md:h-[410px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={scaleData} margin={{ left: 4, right: 16, top: 12, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(255,255,255,0.07)" />
@@ -179,7 +179,7 @@ export function ProfitSimulationCard({ item }: ProfitSimulationCardProps) {
 function ControlGroup({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
   return (
     <div>
-      <div className="mb-5 flex items-center gap-2 text-sm font-black uppercase tracking-[0.16em] text-slate-400">
+      <div className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-slate-400 md:mb-5 md:text-sm">
         {icon}
         {title}
       </div>
@@ -244,7 +244,7 @@ function RangeControl({ label, value, suffix, min, max, onChange }: { label: str
 
 function BreakdownRow({ label, value, negative = false, strong = false }: { label: string; value: string; negative?: boolean; strong?: boolean }) {
   return (
-    <div className={`flex items-center justify-between border-b border-white/10 py-4 last:border-b-0 ${strong ? "rounded-lg border-b-0 bg-white/[0.055] px-3" : ""}`}>
+    <div className={`flex items-center justify-between gap-3 border-b border-white/10 py-4 text-sm last:border-b-0 md:text-base ${strong ? "rounded-lg border-b-0 bg-white/[0.055] px-3" : ""}`}>
       <span className={strong ? "font-black text-white" : "text-slate-400"}>{label}</span>
       <span className={`font-mono font-black ${strong ? "text-mint" : negative ? "text-red-400" : "text-white"}`}>{value}</span>
     </div>

@@ -186,7 +186,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
       </header>
 
       <main className="relative z-10">
-        <section className="relative mx-auto flex min-h-[900px] max-w-[1280px] flex-col items-center px-5 pb-16 pt-20 text-center lg:min-h-[960px] lg:pt-[78px]">
+        <section className="relative mx-auto flex min-h-[760px] max-w-[1280px] flex-col items-center px-5 pb-12 pt-10 text-center sm:pt-14 lg:min-h-[960px] lg:pt-[78px]">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -201,7 +201,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08, duration: 0.65, ease: "easeOut" }}
-            className="mt-2 max-w-[1040px] text-4xl font-black leading-[1.12] text-white sm:text-5xl md:text-6xl lg:text-[72px] xl:text-[76px]"
+            className="mt-4 max-w-[1040px] text-[2.25rem] font-black leading-[1.08] text-white sm:text-5xl md:text-6xl lg:text-[72px] xl:text-[76px]"
           >
             A IA que encontra os melhores produtos para o seu perfil de{" "}
             <span className="landing-text-gradient">venda.</span>
@@ -211,7 +211,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.16, duration: 0.55, ease: "easeOut" }}
-            className="mt-6 max-w-[700px] text-base leading-8 text-white/56 md:text-xl"
+            className="mt-5 max-w-[700px] text-base leading-7 text-white/62 md:text-xl md:leading-8"
           >
             Informe onde você vende, seu nicho e objetivo. O ProductHunter recomenda produtos com maior chance de
             lucro, conversão e oportunidade.
@@ -221,7 +221,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.24, duration: 0.5, ease: "easeOut" }}
-            className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+            className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row"
           >
             <button className="landing-primary-btn" onClick={onStart}>
               <Sparkles size={17} />
@@ -237,7 +237,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
             initial={{ opacity: 0, y: 38, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: 0.34, duration: 0.75, ease: "easeOut" }}
-            className="landing-mockup-float mt-16 w-full max-w-[840px]"
+            className="landing-mockup-float mt-10 w-full max-w-[840px] md:mt-16"
           >
             <DashboardMockup />
           </motion.div>

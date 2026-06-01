@@ -35,7 +35,7 @@ export function LoginPage({
   );
 
   return (
-    <div className="landing-root relative min-h-screen overflow-hidden bg-[#07090d] px-5 py-6 text-white">
+    <div className="landing-root relative min-h-screen overflow-hidden bg-[#07090d] px-4 py-4 text-white sm:px-5 sm:py-6">
       <div className="landing-dot-grid" />
       <div className="landing-orb landing-orb-a" />
       <div className="landing-orb landing-orb-b" />
@@ -46,7 +46,7 @@ export function LoginPage({
           <button
             type="button"
             onClick={() => onNavigate("landing")}
-            className="inline-flex h-11 items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-bold text-white/76 backdrop-blur-xl transition hover:border-electric/30 hover:text-white"
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-bold text-white/76 backdrop-blur-xl transition hover:border-electric/30 hover:text-white sm:h-11"
           >
             <ArrowLeft size={16} />
             Voltar
@@ -57,7 +57,7 @@ export function LoginPage({
           </div>
         </header>
 
-        <main className="grid flex-1 items-center gap-8 py-12 lg:grid-cols-[1fr_420px]">
+        <main className="grid flex-1 content-start items-start gap-7 py-8 lg:grid-cols-[1fr_420px] lg:items-center lg:py-12">
           <motion.section
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -68,10 +68,10 @@ export function LoginPage({
               <Sparkles size={15} />
               ProductHunter AI
             </div>
-            <h1 className="mt-5 text-4xl font-black leading-tight text-white md:text-6xl">
+            <h1 className="mt-4 text-4xl font-black leading-[1.08] text-white md:text-6xl">
               Entre para acessar seu radar de produtos.
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-8 text-white/58 md:text-lg">
+            <p className="mt-4 max-w-xl text-base leading-7 text-white/62 md:text-lg md:leading-8">
               O app cria sua conta usando a identidade verificada pelo Google e salva a sessao em cookie seguro.
             </p>
           </motion.section>

@@ -11,7 +11,7 @@ type ProductDetailProps = {
 
 export function ProductDetail({ item }: ProductDetailProps) {
   return (
-    <div>
+    <div className="py-6 md:py-8">
       <Header
         title="Análise de produto"
         subtitle="Leitura simples do produto selecionado no ranking, com métricas comerciais, operacionais e explicação da IA."
