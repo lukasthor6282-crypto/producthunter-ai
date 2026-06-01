@@ -39,6 +39,7 @@ type GoogleSignInButtonProps = {
 export function GoogleSignInButton({ clientId, disabled, onCredential, onError }: GoogleSignInButtonProps) {
   const buttonRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!clientId || disabled) {
@@ -46,11 +47,20 @@ export function GoogleSignInButton({ clientId, disabled, onCredential, onError }
     }
 
     let cancelled = false;
+    let timedOut = false;
     setStatus("loading");
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled) {
+        return;
+      }
+      timedOut = true;
+      setStatus("error");
+      onError?.("O Google demorou para carregar. Recarregue a pagina ou desative bloqueadores para este site.");
+    }, 10000);
 
     loadGoogleIdentityScript()
       .then(() => {
-        if (cancelled || !window.google?.accounts?.id || !buttonRef.current) {
+        if (cancelled || timedOut || !window.google?.accounts?.id || !buttonRef.current) {
           return;
         }
 
@@ -78,17 +88,20 @@ export function GoogleSignInButton({ clientId, disabled, onCredential, onError }
           width,
           locale: "pt-BR",
         });
+        window.clearTimeout(timeoutId);
         setStatus("ready");
       })
       .catch((error: Error) => {
+        window.clearTimeout(timeoutId);
         setStatus("error");
         onError?.(error.message);
       });
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutId);
     };
-  }, [clientId, disabled, onCredential, onError]);
+  }, [clientId, disabled, onCredential, onError, retryKey]);
 
   if (!clientId) {
     return (
@@ -105,7 +118,20 @@ export function GoogleSignInButton({ clientId, disabled, onCredential, onError }
         <div className="shimmer mt-3 h-11 rounded-full border border-white/10 bg-white/[0.06]" aria-hidden="true" />
       )}
       {status === "error" && (
-        <p className="mt-3 text-sm font-semibold text-ember">Nao foi possivel iniciar o botao do Google.</p>
+        <div className="mt-3 rounded-lg border border-ember/30 bg-ember/10 p-3">
+          <p className="text-sm font-semibold text-ember">Nao foi possivel iniciar o botao do Google.</p>
+          <button
+            type="button"
+            className="mt-3 inline-flex min-h-9 items-center justify-center rounded-full border border-ember/30 px-4 text-sm font-black text-ember transition hover:bg-ember/10"
+            onClick={() => {
+              setStatus("idle");
+              onError?.("");
+              setRetryKey((key) => key + 1);
+            }}
+          >
+            Tentar novamente
+          </button>
+        </div>
       )}
     </div>
   );

@@ -53,12 +53,18 @@ def get_settings() -> Settings:
         if origin.strip()
     ]
 
+    session_cookie_secure = _env_bool("SESSION_COOKIE_SECURE", default=False)
+    session_cookie_samesite = getenv(
+        "SESSION_COOKIE_SAMESITE",
+        "none" if session_cookie_secure else "lax",
+    ).lower()
+
     return Settings(
         database_url=_normalize_database_url(getenv("DATABASE_URL", default_sqlite)),
         google_client_id=getenv("GOOGLE_CLIENT_ID") or None,
         session_cookie_name=getenv("SESSION_COOKIE_NAME", "producthunter_session"),
-        session_cookie_secure=_env_bool("SESSION_COOKIE_SECURE", default=False),
-        session_cookie_samesite=getenv("SESSION_COOKIE_SAMESITE", "lax"),
+        session_cookie_secure=session_cookie_secure,
+        session_cookie_samesite=session_cookie_samesite,
         session_expire_days=int(getenv("SESSION_EXPIRE_DAYS", "30")),
         cors_origins=cors_origins,
     )
