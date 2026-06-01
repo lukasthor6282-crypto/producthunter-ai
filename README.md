@@ -94,6 +94,25 @@ Para producao com HTTPS, use `SESSION_COOKIE_SECURE=true`. O banco padrao e SQLi
 $env:DATABASE_URL="postgresql+psycopg://usuario:senha@host:5432/producthunter"
 ```
 
+#### Assinaturas com Stripe
+
+Planos sugeridos para o MVP:
+
+- Starter: R$ 29/mes, 80 analises por mes
+- Pro: R$ 79/mes, 350 analises por mes
+- Scale: R$ 149/mes, 1.200 analises por mes e 3 usuarios
+
+Para ativar checkout real, crie produtos recorrentes no Stripe e configure no backend:
+
+```powershell
+$env:APP_PUBLIC_URL="https://producthunter-ai.pages.dev"
+$env:STRIPE_SECRET_KEY="sk_live_..."
+$env:STRIPE_WEBHOOK_SECRET="whsec_..."
+$env:STRIPE_PRICE_STARTER="price_..."
+$env:STRIPE_PRICE_PRO="price_..."
+$env:STRIPE_PRICE_SCALE="price_..."
+```
+
 ### Frontend
 
 ```powershell
@@ -135,6 +154,11 @@ Perfil usado no teste:
 - `GET /auth/me`
 - `POST /auth/google`
 - `POST /auth/logout`
+- `GET /billing/plans`
+- `GET /billing/subscription`
+- `POST /billing/checkout`
+- `POST /billing/portal`
+- `POST /billing/webhook`
 - `GET /metadata/options`
 - `GET /products`
 - `GET /products/search`

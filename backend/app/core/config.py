@@ -24,6 +24,12 @@ def _normalize_database_url(url: str) -> str:
 class Settings(BaseModel):
     database_url: str
     google_client_id: str | None = None
+    app_public_url: str = "http://localhost:5173"
+    stripe_secret_key: str | None = None
+    stripe_webhook_secret: str | None = None
+    stripe_price_starter: str | None = None
+    stripe_price_pro: str | None = None
+    stripe_price_scale: str | None = None
     session_cookie_name: str = "producthunter_session"
     session_cookie_secure: bool = False
     session_cookie_samesite: str = "lax"
@@ -62,6 +68,12 @@ def get_settings() -> Settings:
     return Settings(
         database_url=_normalize_database_url(getenv("DATABASE_URL", default_sqlite)),
         google_client_id=getenv("GOOGLE_CLIENT_ID") or None,
+        app_public_url=getenv("APP_PUBLIC_URL", "http://localhost:5173").rstrip("/"),
+        stripe_secret_key=getenv("STRIPE_SECRET_KEY") or None,
+        stripe_webhook_secret=getenv("STRIPE_WEBHOOK_SECRET") or None,
+        stripe_price_starter=getenv("STRIPE_PRICE_STARTER") or None,
+        stripe_price_pro=getenv("STRIPE_PRICE_PRO") or None,
+        stripe_price_scale=getenv("STRIPE_PRICE_SCALE") or None,
         session_cookie_name=getenv("SESSION_COOKIE_NAME", "producthunter_session"),
         session_cookie_secure=session_cookie_secure,
         session_cookie_samesite=session_cookie_samesite,

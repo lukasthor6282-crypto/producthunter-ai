@@ -11,13 +11,14 @@ import { RecommendationProfile } from "./pages/RecommendationProfile";
 import { RecommendationResults } from "./pages/RecommendationResults";
 import { ProductDetail } from "./pages/ProductDetail";
 import { ProfitSimulator } from "./pages/ProfitSimulator";
+import { SubscriptionPage } from "./pages/SubscriptionPage";
 import { AILab } from "./pages/AILab";
 import { useAuth } from "./hooks/useAuth";
 import { useRecommendations } from "./hooks/useRecommendations";
 import type { RecommendationItem } from "./types/recommendation";
 import { defaultProfile, type UserProfile } from "./types/userProfile";
 
-const protectedPages = new Set<PageKey>(["dashboard", "profile", "results", "product", "profit", "ai"]);
+const protectedPages = new Set<PageKey>(["dashboard", "profile", "results", "product", "profit", "billing", "ai"]);
 
 export default function App() {
   const [activePage, setActivePage] = useState<PageKey>("landing");
@@ -131,6 +132,7 @@ export default function App() {
       results: <RecommendationResults data={data} selectedItem={selectedItem} onSelect={setSelectedItem} onNavigate={navigate} />,
       product: <ProductDetail item={selectedItem} />,
       profit: <ProfitSimulator item={selectedItem} />,
+      billing: <SubscriptionPage />,
       ai: <AILab item={selectedItem} />,
     };
     return pages[activePage];

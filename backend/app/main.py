@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from app.api import (
     routes_auth,
     routes_analytics,
+    routes_billing,
     routes_ml,
     routes_products,
     routes_profit,
@@ -85,6 +86,7 @@ def metadata_options() -> dict:
 
 
 app.include_router(routes_auth.router)
+app.include_router(routes_billing.router)
 app.include_router(routes_products.router)
 app.include_router(routes_recommendations.router)
 app.include_router(routes_profit.router)

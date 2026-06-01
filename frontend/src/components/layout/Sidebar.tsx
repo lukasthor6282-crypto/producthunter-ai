@@ -1,8 +1,8 @@
 import {
   BarChart3,
   Calculator,
+  CreditCard,
   FlaskConical,
-  Heart,
   LayoutDashboard,
   LogOut,
   Search,
@@ -24,6 +24,7 @@ export type PageKey =
   | "results"
   | "product"
   | "profit"
+  | "billing"
   | "ai";
 
 type SidebarProps = {
@@ -48,7 +49,7 @@ const navItems: NavItem[] = [
   { key: "results", label: "Resultados", icon: Trophy, badge: "5" },
   { key: "profit", label: "Simulador", icon: Calculator },
   { key: "ai", label: "Lab de IA", icon: FlaskConical },
-  { label: "Favoritos", icon: Heart },
+  { key: "billing", label: "Planos", icon: CreditCard },
 ];
 
 export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout, isLoggingOut }: SidebarProps) {
@@ -84,7 +85,7 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
 
         {!isCompact && <div className="hidden h-px bg-white/10 lg:block" />}
 
-        <nav className={cn("grid flex-1 grid-cols-5 gap-1 lg:flex lg:flex-col", isCompact ? "lg:mt-7 lg:gap-3" : "lg:mt-5 lg:gap-2")}>
+        <nav className={cn("grid flex-1 grid-cols-6 gap-1 lg:flex lg:flex-col", isCompact ? "lg:mt-7 lg:gap-3" : "lg:mt-5 lg:gap-2")}>
           {!isCompact && (
             <p className="hidden px-1 pb-3 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 lg:block">
               Navegação
