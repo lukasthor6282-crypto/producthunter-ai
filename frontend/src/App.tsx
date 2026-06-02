@@ -13,6 +13,7 @@ import { ProductDetail } from "./pages/ProductDetail";
 import { ProfitSimulator } from "./pages/ProfitSimulator";
 import { SubscriptionPage } from "./pages/SubscriptionPage";
 import { AILab } from "./pages/AILab";
+import { AUTH_REQUIRED_EVENT, isUnauthorizedError } from "./services/api";
 import { useAuth } from "./hooks/useAuth";
 import { useRecommendations } from "./hooks/useRecommendations";
 import type { RecommendationItem } from "./types/recommendation";
@@ -24,7 +25,14 @@ export default function App() {
   const [activePage, setActivePage] = useState<PageKey>("landing");
   const [redirectAfterLogin, setRedirectAfterLogin] = useState<PageKey>("dashboard");
   const [selectedItem, setSelectedItem] = useState<RecommendationItem | undefined>();
-  const { data, isLoading: isRecommendationLoading, error, run } = useRecommendations();
+  const {
+    data,
+    isLoading: isRecommendationLoading,
+    error,
+    rawError: rawRecommendationError,
+    run,
+    reset: resetRecommendation,
+  } = useRecommendations();
   const {
     authConfig,
     user,
@@ -36,6 +44,7 @@ export default function App() {
     isLoggingOut,
     loginWithGoogle,
     logout,
+    clearSession,
     error: authError,
   } = useAuth();
 
@@ -59,6 +68,22 @@ export default function App() {
     }
   }, [activePage, isAuthenticated, isAuthLoading, redirectAfterLogin]);
 
+  useEffect(() => {
+    function handleAuthRequired() {
+      clearSession();
+      resetRecommendation();
+      setSelectedItem(undefined);
+
+      if (protectedPages.has(activePage)) {
+        setRedirectAfterLogin(activePage);
+        setActivePage("login");
+      }
+    }
+
+    window.addEventListener(AUTH_REQUIRED_EVENT, handleAuthRequired);
+    return () => window.removeEventListener(AUTH_REQUIRED_EVENT, handleAuthRequired);
+  }, [activePage, clearSession, resetRecommendation]);
+
   const navigate = useCallback((page: PageKey) => {
     if (protectedPages.has(page) && !isAuthenticated) {
       setRedirectAfterLogin(page);
@@ -79,10 +104,16 @@ export default function App() {
       const response = await run(profile);
       setSelectedItem(response.recommendations[0]);
       setActivePage("results");
-    } catch {
-      // The mutation already exposes the API error for the shell banner.
+    } catch (requestError) {
+      if (isUnauthorizedError(requestError)) {
+        clearSession();
+        resetRecommendation();
+        setSelectedItem(undefined);
+        setRedirectAfterLogin("profile");
+        setActivePage("login");
+      }
     }
-  }, [isAuthenticated, run]);
+  }, [clearSession, isAuthenticated, resetRecommendation, run]);
 
   const startDemo = useCallback(async () => {
     if (!isAuthenticated) {
@@ -100,9 +131,10 @@ export default function App() {
 
   const handleLogout = useCallback(async () => {
     await logout();
+    resetRecommendation();
     setSelectedItem(undefined);
     setActivePage("landing");
-  }, [logout]);
+  }, [logout, resetRecommendation]);
 
   const page = useMemo(() => {
     const pages: Record<PageKey, ReactNode> = {
@@ -144,6 +176,7 @@ export default function App() {
     generate,
     handleGoogleCredential,
     handleLogout,
+    isAuthenticated,
     isConfigLoading,
     isGoogleConfigured,
     isLoggingIn,
@@ -157,6 +190,7 @@ export default function App() {
 
   const isPublicPage = activePage === "landing" || activePage === "login";
   const isCompactShell = activePage === "profit" || activePage === "ai";
+  const shouldShowRecommendationError = Boolean(error && !isUnauthorizedError(rawRecommendationError));
 
   return (
     <div className={isPublicPage ? "min-h-screen bg-[#07090d] text-white" : "kombai-shell min-h-screen text-white"}>
@@ -183,7 +217,7 @@ export default function App() {
               : "min-h-screen min-w-0 px-3 pb-28 pt-0 sm:px-4 lg:ml-60 lg:px-8 lg:pb-24 xl:px-10"
         }
       >
-        {!isPublicPage && error && (
+        {!isPublicPage && shouldShowRecommendationError && (
           <div className="mb-4 flex items-center gap-3 rounded-md border border-ember/30 bg-ember/10 p-4 text-sm text-ember">
             <AlertTriangle size={18} />
             Backend indisponivel ou erro na API: {error}

@@ -52,14 +52,19 @@ def get_settings() -> Settings:
     load_dotenv(project_dir / ".env")
     load_dotenv(backend_dir / ".env", override=True)
 
+    app_public_url = getenv("APP_PUBLIC_URL", "http://localhost:5173").rstrip("/")
     default_sqlite = f"sqlite:///{(backend_dir / 'producthunter.db').as_posix()}"
-    cors_origins = [
-        origin.strip()
-        for origin in getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
-        if origin.strip()
-    ]
+    raw_cors_origins = getenv("CORS_ORIGINS")
+    default_cors_origins = f"http://localhost:5173,http://127.0.0.1:5173,{app_public_url}"
+    cors_origins = list(
+        dict.fromkeys(
+            origin.strip()
+            for origin in (raw_cors_origins or default_cors_origins).split(",")
+            if origin.strip()
+        )
+    )
 
-    session_cookie_secure = _env_bool("SESSION_COOKIE_SECURE", default=False)
+    session_cookie_secure = _env_bool("SESSION_COOKIE_SECURE", default=app_public_url.startswith("https://"))
     session_cookie_samesite = getenv(
         "SESSION_COOKIE_SAMESITE",
         "none" if session_cookie_secure else "lax",
@@ -68,7 +73,7 @@ def get_settings() -> Settings:
     return Settings(
         database_url=_normalize_database_url(getenv("DATABASE_URL", default_sqlite)),
         google_client_id=getenv("GOOGLE_CLIENT_ID") or None,
-        app_public_url=getenv("APP_PUBLIC_URL", "http://localhost:5173").rstrip("/"),
+        app_public_url=app_public_url,
         stripe_secret_key=getenv("STRIPE_SECRET_KEY") or None,
         stripe_webhook_secret=getenv("STRIPE_WEBHOOK_SECRET") or None,
         stripe_price_starter=getenv("STRIPE_PRICE_STARTER") or None,

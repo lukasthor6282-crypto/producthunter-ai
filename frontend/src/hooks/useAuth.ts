@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 import {
   getAuthConfig,
@@ -11,6 +12,14 @@ const authSessionKey = ["auth", "session"] as const;
 
 export function useAuth() {
   const queryClient = useQueryClient();
+
+  const clearSession = useCallback(() => {
+    queryClient.setQueryData(authSessionKey, null);
+    queryClient.removeQueries({ queryKey: ["analytics"] });
+    queryClient.removeQueries({ queryKey: ["billing", "subscription"] });
+    queryClient.removeQueries({ queryKey: ["ml"] });
+    queryClient.removeQueries({ queryKey: ["profit"] });
+  }, [queryClient]);
 
   const configQuery = useQuery({
     queryKey: ["auth", "config"],
@@ -36,8 +45,7 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: logoutSession,
     onSuccess: () => {
-      queryClient.setQueryData(authSessionKey, null);
-      queryClient.removeQueries({ queryKey: ["analytics"] });
+      clearSession();
     },
   });
 
@@ -62,6 +70,7 @@ export function useAuth() {
     isGoogleConfigured: Boolean(configQuery.data?.google_auth_enabled),
     loginWithGoogle: loginMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,
+    clearSession,
     error,
   };
 }

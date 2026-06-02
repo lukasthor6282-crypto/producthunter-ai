@@ -7,12 +7,11 @@ export function useRecommendations() {
     mutationFn: (profile: UserProfile) => generateRecommendations(profile),
   });
 
-  const error = mutation.error instanceof Error ? mutation.error.message : null;
-
   return {
     data: mutation.data ?? null,
     isLoading: mutation.isPending,
-    error,
+    error: mutation.error instanceof Error ? mutation.error.message : null,
+    rawError: mutation.error,
     run: mutation.mutateAsync,
     reset: mutation.reset,
   };
