@@ -1,3 +1,5 @@
+import { clearStoredAuthSession, getStoredAuthToken } from "./authToken";
+
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 export class ApiError extends Error {
@@ -47,13 +49,20 @@ export function isUnauthorizedError(error: unknown): error is ApiError {
 }
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const storedAuthToken = getStoredAuthToken();
+  if (storedAuthToken && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${storedAuthToken}`);
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
     ...init,
+    credentials: "include",
+    headers,
   });
 
   if (!response.ok) {
@@ -61,6 +70,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
     const detail = parseErrorDetail(body);
 
     if (response.status === 401 && typeof window !== "undefined") {
+      clearStoredAuthSession();
       window.dispatchEvent(new CustomEvent(AUTH_REQUIRED_EVENT, { detail: { path } }));
     }
 

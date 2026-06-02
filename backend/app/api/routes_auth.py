@@ -50,6 +50,17 @@ def _validate_origin(request: Request) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Origem nao autorizada.")
 
 
+def _bearer_token(request: Request) -> str | None:
+    authorization = request.headers.get("authorization")
+    if not authorization:
+        return None
+
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        return None
+    return token.strip()
+
+
 @router.get("/config", response_model=AuthConfig)
 def auth_config() -> AuthConfig:
     settings = get_settings()
@@ -78,7 +89,7 @@ def login_with_google(
         ip_address=request.client.host if request.client else None,
     )
     _set_session_cookie(response, raw_token, session.expires_at)
-    return AuthSessionResponse(user=user, expires_at=session.expires_at)
+    return AuthSessionResponse(user=user, expires_at=session.expires_at, access_token=raw_token)
 
 
 @router.get("/me", response_model=AuthSessionResponse)
@@ -89,6 +100,6 @@ def me(session=Depends(get_current_session)) -> AuthSessionResponse:
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(request: Request, response: Response, db: Session = Depends(get_db)) -> Response:
     settings = get_settings()
-    revoke_session(db, request.cookies.get(settings.session_cookie_name))
+    revoke_session(db, request.cookies.get(settings.session_cookie_name) or _bearer_token(request))
     _clear_session_cookie(response)
     return response

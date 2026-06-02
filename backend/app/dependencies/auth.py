@@ -7,9 +7,20 @@ from app.models.auth_models import User, UserSession
 from app.services.auth_service import get_valid_session
 
 
+def _bearer_token(request: Request) -> str | None:
+    authorization = request.headers.get("authorization")
+    if not authorization:
+        return None
+
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        return None
+    return token.strip()
+
+
 def get_current_session(request: Request, db: Session = Depends(get_db)) -> UserSession:
     settings = get_settings()
-    raw_token = request.cookies.get(settings.session_cookie_name)
+    raw_token = request.cookies.get(settings.session_cookie_name) or _bearer_token(request)
     session = get_valid_session(db, raw_token)
     if session is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login necessario.")

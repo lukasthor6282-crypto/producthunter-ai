@@ -29,3 +29,4 @@ class GoogleLoginRequest(BaseModel):
 class AuthSessionResponse(BaseModel):
     user: AuthUser
     expires_at: datetime
+    access_token: str | None = None

@@ -2,6 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
 import {
+  clearStoredAuthSession,
+  storeAuthSession,
+} from "../services/authToken";
+import {
   getAuthConfig,
   getCurrentSession,
   loginWithGoogleCredential,
@@ -14,6 +18,7 @@ export function useAuth() {
   const queryClient = useQueryClient();
 
   const clearSession = useCallback(() => {
+    clearStoredAuthSession();
     queryClient.setQueryData(authSessionKey, null);
     queryClient.removeQueries({ queryKey: ["analytics"] });
     queryClient.removeQueries({ queryKey: ["billing", "subscription"] });
@@ -38,6 +43,7 @@ export function useAuth() {
   const loginMutation = useMutation({
     mutationFn: loginWithGoogleCredential,
     onSuccess: (session) => {
+      storeAuthSession(session);
       queryClient.setQueryData(authSessionKey, session);
     },
   });

@@ -18,6 +18,7 @@ export type AuthConfig = {
 export type AuthSession = {
   user: AuthUser;
   expires_at: string;
+  access_token?: string | null;
 };
 
 export type GoogleCredentialResponse = {
