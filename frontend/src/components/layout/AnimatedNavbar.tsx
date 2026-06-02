@@ -11,7 +11,8 @@ type AnimatedNavbarProps = {
 
 const links: Array<{ label: string; page: PageKey }> = [
   { label: "Dashboard", page: "dashboard" },
-  { label: "Perfil", page: "profile" },
+  { label: "Perfil", page: "account" },
+  { label: "Recomendar", page: "profile" },
   { label: "Ranking", page: "results" },
   { label: "AI Lab", page: "ai" },
 ];
@@ -76,7 +77,7 @@ export function AnimatedNavbar({ onNavigate, onStart }: AnimatedNavbarProps) {
         </button>
         <button
           type="button"
-          onClick={() => onNavigate("profile")}
+          onClick={() => onNavigate("account")}
           aria-label="Abrir perfil"
           className="hidden h-10 w-10 items-center justify-center rounded-md border border-white/10 bg-white/[0.06] text-electric transition hover:border-electric/35 hover:bg-electric/10 sm:flex"
         >

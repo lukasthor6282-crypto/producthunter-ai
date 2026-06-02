@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import { Sidebar, type PageKey } from "./components/layout/Sidebar";
+import { AccountPage } from "./pages/AccountPage";
 import { Dashboard } from "./pages/Dashboard";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -19,8 +20,8 @@ import { useRecommendations } from "./hooks/useRecommendations";
 import type { RecommendationItem } from "./types/recommendation";
 import { defaultProfile, type UserProfile } from "./types/userProfile";
 
-const protectedPages = new Set<PageKey>(["dashboard", "profile", "results", "product", "profit", "billing", "ai"]);
-const restorablePages = new Set<PageKey>(["dashboard", "profile", "profit", "billing", "ai"]);
+const protectedPages = new Set<PageKey>(["dashboard", "account", "profile", "results", "product", "profit", "billing", "ai"]);
+const restorablePages = new Set<PageKey>(["dashboard", "account", "profile", "profit", "billing", "ai"]);
 const activePageStorageKey = "producthunter.activePage";
 
 function readInitialPage(): PageKey {
@@ -189,6 +190,7 @@ export default function App() {
         />
       ),
       dashboard: <Dashboard />,
+      account: <AccountPage user={user} onLogout={handleLogout} isLoggingOut={isLoggingOut} />,
       profile: <RecommendationProfile onGenerate={generate} isLoading={isRecommendationLoading} />,
       results: <RecommendationResults data={data} selectedItem={selectedItem} onSelect={setSelectedItem} onNavigate={navigate} />,
       product: <ProductDetail item={selectedItem} />,

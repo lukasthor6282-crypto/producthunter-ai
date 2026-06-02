@@ -424,7 +424,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
             <span>ProductHunter</span>
           </div>
           <div className="flex flex-wrap gap-5">
-            <button className="transition hover:text-white" onClick={() => onNavigate("profile")}>Perfil</button>
+            <button className="transition hover:text-white" onClick={() => onNavigate("account")}>Perfil</button>
             <button className="transition hover:text-white" onClick={() => onNavigate("profit")}>Simulador</button>
             <button className="transition hover:text-white" onClick={() => onNavigate("ai")}>Laboratório de IA</button>
           </div>

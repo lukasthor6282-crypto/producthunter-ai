@@ -1,11 +1,11 @@
 import {
   BarChart3,
   Calculator,
-  CreditCard,
   FlaskConical,
   LayoutDashboard,
   LogOut,
   Search,
+  Sparkles,
   Store,
   Trophy,
   UserCircle2,
@@ -19,6 +19,7 @@ import type { AuthUser } from "../../types/auth";
 export type PageKey =
   | "landing"
   | "login"
+  | "account"
   | "dashboard"
   | "profile"
   | "results"
@@ -45,11 +46,11 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { key: "profile", label: "Recomendar", icon: UserCircle2 },
+  { key: "account", label: "Perfil", icon: UserCircle2 },
+  { key: "profile", label: "Recomendar", icon: Sparkles },
   { key: "results", label: "Resultados", icon: Trophy, badge: "5" },
   { key: "profit", label: "Simulador", icon: Calculator },
   { key: "ai", label: "Lab de IA", icon: FlaskConical },
-  { key: "billing", label: "Planos", icon: CreditCard },
 ];
 
 export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout, isLoggingOut }: SidebarProps) {
@@ -139,18 +140,24 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
               <Search size={17} />
             </button>
           ) : (
-            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.035] p-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/[0.07] text-cyan-200">
-                {user?.picture_url ? (
-                  <img src={user.picture_url} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  <UserCircle2 size={18} />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-white">{user?.name ?? "Cliente ProductHunter"}</p>
-                <p className="truncate text-xs font-semibold text-slate-500">{user?.email ?? "Conta Google"}</p>
-              </div>
+            <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.035] p-2">
+              <button
+                type="button"
+                onClick={() => onNavigate("account")}
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-md p-1.5 text-left transition hover:bg-white/[0.045]"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/[0.07] text-cyan-200">
+                  {user?.picture_url ? (
+                    <img src={user.picture_url} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <UserCircle2 size={18} />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-white">{user?.name ?? "Cliente ProductHunter"}</p>
+                  <p className="truncate text-xs font-semibold text-slate-500">{user?.email ?? "Conta Google"}</p>
+                </div>
+              </button>
               <button
                 type="button"
                 onClick={onLogout}
