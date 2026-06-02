@@ -37,7 +37,7 @@ export function GlassCard({
 
   return (
     <Comp
-      className={cn("glass-surface rounded-lg", variantClasses[variant], interactive && "spotlight-card transition duration-300 hover:border-electric/30", className)}
+      className={cn("glass-surface min-w-0 rounded-lg", variantClasses[variant], interactive && "spotlight-card transition duration-300 hover:border-electric/30", className)}
       onMouseMove={interactive ? handleMouseMove : undefined}
     >
       <div className={cn("glass-content", contentClassName)}>{children}</div>

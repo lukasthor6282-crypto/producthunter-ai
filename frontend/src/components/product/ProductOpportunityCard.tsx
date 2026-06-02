@@ -21,8 +21,8 @@ export function ProductOpportunityCard({ item, rank, onSelect, compact = false }
     <TiltCard3D>
       <GlassCard className="group overflow-hidden p-4 transition duration-300 hover:shadow-[0_28px_100px_rgba(0,0,0,0.55)]" variant={rank === 1 ? "mint" : "strong"} interactive>
         <div className="absolute right-0 top-0 h-1 w-full bg-[linear-gradient(90deg,transparent,rgba(98,230,255,0.45),rgba(101,240,183,0.35),transparent)] opacity-0 transition group-hover:opacity-100" />
-        <div className={`flex flex-col gap-4 ${compact ? "" : "xl:flex-row xl:items-center"}`}>
-          <div className="flex flex-1 gap-4">
+        <div className={`flex min-w-0 flex-col gap-4 ${compact ? "" : "xl:flex-row xl:items-center"}`}>
+          <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
             <div className="mono-number relative flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.08] text-lg font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
               {rank === 1 && <Sparkles className="absolute -right-1 -top-1 text-mint" size={14} />}
               {String(rank).padStart(2, "0")}
@@ -34,12 +34,12 @@ export function ProductOpportunityCard({ item, rank, onSelect, compact = false }
                   {item.product.niche_label}
                 </span>
               </div>
-              <h3 className="mt-3 text-xl font-extrabold text-white">{item.product.name}</h3>
+              <h3 className="mt-3 break-words text-xl font-extrabold leading-tight text-white">{item.product.name}</h3>
               <p className="mt-2 line-clamp-2 text-sm leading-6 text-mist">{item.explanation}</p>
             </div>
           </div>
 
-          <div className={`grid grid-cols-2 gap-3 sm:grid-cols-4 ${compact ? "" : "xl:w-[520px]"}`}>
+          <div className={`grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-4 ${compact ? "" : "xl:w-[520px]"}`}>
             <Metric label="Margem" value={percent(item.estimated_margin_percent)} />
             <Metric label="Lucro" value={brl.format(item.estimated_profit)} />
             <Metric label="Conversao" value={percent(item.conversion_probability)} />

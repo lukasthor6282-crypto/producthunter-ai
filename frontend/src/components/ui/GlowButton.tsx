@@ -21,13 +21,13 @@ export function GlowButton({ children, className = "", variant = "primary", ...p
       whileHover={{ y: -1 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "relative inline-flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-md px-4 py-2 text-sm font-semibold transition duration-300 before:absolute before:inset-0 before:translate-x-[-120%] before:bg-[linear-gradient(100deg,transparent,rgba(255,255,255,0.28),transparent)] before:transition-transform before:duration-700 hover:before:translate-x-[120%] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-electric/60 disabled:pointer-events-none disabled:opacity-50",
+        "relative inline-flex min-h-11 max-w-full items-center justify-center gap-2 overflow-hidden rounded-md px-4 py-2 text-center text-sm font-semibold transition duration-300 before:absolute before:inset-0 before:translate-x-[-120%] before:bg-[linear-gradient(100deg,transparent,rgba(255,255,255,0.28),transparent)] before:transition-transform before:duration-700 hover:before:translate-x-[120%] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-electric/60 disabled:pointer-events-none disabled:opacity-50",
         styles[variant],
         className,
       )}
       {...props}
     >
-      <span className="relative z-10 inline-flex items-center gap-2">{children}</span>
+      <span className="relative z-10 inline-flex min-w-0 items-center justify-center gap-2">{children}</span>
     </motion.button>
   );
 }

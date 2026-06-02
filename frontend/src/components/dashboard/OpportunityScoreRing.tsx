@@ -14,7 +14,7 @@ export function OpportunityScoreRing({ score, size = "lg" }: OpportunityScoreRin
   const offset = circumference - (Math.max(0, Math.min(score, 100)) / 100) * circumference;
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: dimension, height: dimension }}>
+    <div className="relative inline-flex shrink-0 items-center justify-center" style={{ width: dimension, height: dimension }}>
       <svg width={dimension} height={dimension} className="-rotate-90">
         <circle
           cx={dimension / 2}

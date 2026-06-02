@@ -22,19 +22,19 @@ const toneClasses: Record<NonNullable<HeaderProps["tone"]>, string> = {
 
 export function Header({ title, subtitle, actionLabel, onAction, icon: Icon = Sparkles, tone = "electric" }: HeaderProps) {
   return (
-    <header className="glass-surface glass-strong mb-6 rounded-lg px-4 py-4 md:px-5">
+    <header className="glass-surface glass-strong mb-6 min-w-0 rounded-lg px-4 py-4 md:px-5">
       <div className="glass-content flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex items-start gap-4">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
           <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border ${toneClasses[tone]}`}>
             <Icon size={21} />
           </div>
-          <div>
-            <h1 className="text-2xl font-extrabold leading-tight text-white md:text-3xl">{title}</h1>
+          <div className="min-w-0">
+            <h1 className="break-words text-2xl font-extrabold leading-tight text-white md:text-3xl">{title}</h1>
             <p className="mt-1 max-w-3xl text-sm leading-6 text-mist">{subtitle}</p>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 xl:justify-end">
+        <div className="grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:flex sm:w-auto sm:flex-wrap xl:justify-end">
           <StatusChip tone="mint" icon={<Activity size={14} />}>
             API pronta
           </StatusChip>
@@ -42,7 +42,7 @@ export function Header({ title, subtitle, actionLabel, onAction, icon: Icon = Sp
             ML inicial
           </StatusChip>
           {actionLabel && (
-            <GlowButton onClick={onAction} className="min-h-8 px-3 py-1.5">
+            <GlowButton onClick={onAction} className="min-h-9 w-full px-3 py-1.5 min-[420px]:col-span-2 sm:w-auto">
               <Command size={15} />
               {actionLabel}
             </GlowButton>

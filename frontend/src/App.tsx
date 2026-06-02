@@ -179,8 +179,8 @@ export default function App() {
           isPublicPage
             ? "min-h-screen"
             : isCompactShell
-              ? "min-h-screen px-4 pb-28 pt-0 lg:ml-16 lg:px-8 lg:pb-24 xl:px-10"
-              : "min-h-screen px-4 pb-28 pt-0 lg:ml-60 lg:px-8 lg:pb-24 xl:px-10"
+              ? "min-h-screen min-w-0 px-3 pb-28 pt-0 sm:px-4 lg:ml-16 lg:px-8 lg:pb-24 xl:px-10"
+              : "min-h-screen min-w-0 px-3 pb-28 pt-0 sm:px-4 lg:ml-60 lg:px-8 lg:pb-24 xl:px-10"
         }
       >
         {!isPublicPage && error && (

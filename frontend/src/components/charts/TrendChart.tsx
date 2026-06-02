@@ -10,8 +10,8 @@ export function TrendChart({ data, xKey = "niche_label", yKey = "trend_score" }:
   const formatLabel = (value: string) => (value.length > 9 ? `${value.slice(0, 8)}.` : value);
 
   return (
-    <div className="h-72 w-full">
-      <ResponsiveContainer>
+    <div className="h-72 min-w-0 overflow-hidden">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={288} initialDimension={{ width: 320, height: 288 }}>
         <AreaChart data={data} margin={{ left: -20, right: 12, top: 12, bottom: 0 }}>
           <defs>
             <linearGradient id="trendFill" x1="0" x2="0" y1="0" y2="1">

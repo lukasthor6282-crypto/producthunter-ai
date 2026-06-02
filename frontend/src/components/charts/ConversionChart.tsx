@@ -6,8 +6,8 @@ type ConversionChartProps = {
 
 export function ConversionChart({ data }: ConversionChartProps) {
   return (
-    <div className="h-64 w-full">
-      <ResponsiveContainer>
+    <div className="h-64 min-w-0 overflow-hidden">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={256} initialDimension={{ width: 320, height: 256 }}>
         <AreaChart data={data} margin={{ left: -18, right: 12, top: 12, bottom: 0 }}>
           <defs>
             <linearGradient id="conversionFill" x1="0" x2="0" y1="0" y2="1">

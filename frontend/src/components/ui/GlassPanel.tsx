@@ -19,7 +19,7 @@ const variantClasses: Record<NonNullable<GlassPanelProps["variant"]>, string> = 
 
 export function GlassPanel({ children, className, contentClassName, variant = "default" }: GlassPanelProps) {
   return (
-    <div className={cn("glass-surface rounded-lg", variantClasses[variant], className)}>
+    <div className={cn("glass-surface min-w-0 rounded-lg", variantClasses[variant], className)}>
       <div className={cn("glass-content", contentClassName)}>{children}</div>
     </div>
   );

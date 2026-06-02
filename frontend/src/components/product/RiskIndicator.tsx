@@ -19,7 +19,7 @@ export function RiskIndicator({ value, compact = false }: RiskIndicatorProps) {
   const Icon = tone.icon;
 
   return (
-    <div className="min-w-0">
+    <div className="w-full min-w-0">
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className={cn("inline-flex items-center gap-1.5 text-sm font-bold", tone.text)}>
           <Icon size={compact ? 14 : 16} />

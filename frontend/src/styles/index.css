@@ -23,6 +23,7 @@
 
 html {
   min-height: 100%;
+  overflow-x: hidden;
   scroll-behavior: smooth;
 }
 
@@ -827,6 +828,10 @@ button {
 }
 
 @media (max-width: 767px) {
+  .ambient-ribbon {
+    display: none;
+  }
+
   .kombai-topbar {
     min-height: 78px;
     padding-top: 0.8rem;

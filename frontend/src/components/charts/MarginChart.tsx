@@ -6,8 +6,8 @@ type MarginChartProps = {
 
 export function MarginChart({ data }: MarginChartProps) {
   return (
-    <div className="h-64 w-full">
-      <ResponsiveContainer>
+    <div className="h-64 min-w-0 overflow-hidden">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={256} initialDimension={{ width: 320, height: 256 }}>
         <BarChart data={data} margin={{ left: -18, right: 12, top: 12, bottom: 0 }}>
           <CartesianGrid stroke="rgba(255,255,255,0.07)" vertical={false} />
           <XAxis
