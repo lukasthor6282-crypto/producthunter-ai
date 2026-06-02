@@ -20,9 +20,36 @@ import type { RecommendationItem } from "./types/recommendation";
 import { defaultProfile, type UserProfile } from "./types/userProfile";
 
 const protectedPages = new Set<PageKey>(["dashboard", "profile", "results", "product", "profit", "billing", "ai"]);
+const restorablePages = new Set<PageKey>(["dashboard", "profile", "profit", "billing", "ai"]);
+const activePageStorageKey = "producthunter.activePage";
+
+function readInitialPage(): PageKey {
+  if (typeof window === "undefined") {
+    return "landing";
+  }
+
+  const storedPage = window.localStorage.getItem(activePageStorageKey) as PageKey | null;
+  return storedPage && restorablePages.has(storedPage) ? storedPage : "landing";
+}
+
+function storeActivePage(page: PageKey) {
+  if (typeof window === "undefined" || !protectedPages.has(page)) {
+    return;
+  }
+
+  window.localStorage.setItem(activePageStorageKey, restorablePages.has(page) ? page : "dashboard");
+}
+
+function clearStoredActivePage() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(activePageStorageKey);
+}
 
 export default function App() {
-  const [activePage, setActivePage] = useState<PageKey>("landing");
+  const [activePage, setActivePage] = useState<PageKey>(() => readInitialPage());
   const [redirectAfterLogin, setRedirectAfterLogin] = useState<PageKey>("dashboard");
   const [selectedItem, setSelectedItem] = useState<RecommendationItem | undefined>();
   const {
@@ -56,6 +83,7 @@ export default function App() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    storeActivePage(activePage);
   }, [activePage]);
 
   useEffect(() => {
@@ -131,6 +159,7 @@ export default function App() {
 
   const handleLogout = useCallback(async () => {
     await logout();
+    clearStoredActivePage();
     resetRecommendation();
     setSelectedItem(undefined);
     setActivePage("landing");

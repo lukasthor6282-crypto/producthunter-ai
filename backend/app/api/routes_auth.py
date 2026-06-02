@@ -100,6 +100,6 @@ def me(session=Depends(get_current_session)) -> AuthSessionResponse:
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(request: Request, response: Response, db: Session = Depends(get_db)) -> Response:
     settings = get_settings()
-    revoke_session(db, request.cookies.get(settings.session_cookie_name) or _bearer_token(request))
+    revoke_session(db, _bearer_token(request) or request.cookies.get(settings.session_cookie_name))
     _clear_session_cookie(response)
     return response

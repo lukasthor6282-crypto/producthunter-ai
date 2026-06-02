@@ -20,7 +20,7 @@ def _bearer_token(request: Request) -> str | None:
 
 def get_current_session(request: Request, db: Session = Depends(get_db)) -> UserSession:
     settings = get_settings()
-    raw_token = request.cookies.get(settings.session_cookie_name) or _bearer_token(request)
+    raw_token = _bearer_token(request) or request.cookies.get(settings.session_cookie_name)
     session = get_valid_session(db, raw_token)
     if session is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login necessario.")
