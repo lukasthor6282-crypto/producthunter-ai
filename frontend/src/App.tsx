@@ -49,6 +49,14 @@ function clearStoredActivePage() {
   window.localStorage.removeItem(activePageStorageKey);
 }
 
+function firstProfileCompatibleRecommendation(data: { profile: UserProfile; recommendations: RecommendationItem[] } | null) {
+  if (!data) {
+    return undefined;
+  }
+
+  return data.recommendations.find((item) => item.product.niche === data.profile.niche);
+}
+
 export default function App() {
   const [activePage, setActivePage] = useState<PageKey>(() => readInitialPage());
   const [redirectAfterLogin, setRedirectAfterLogin] = useState<PageKey>("dashboard");
@@ -77,9 +85,7 @@ export default function App() {
   } = useAuth();
 
   useEffect(() => {
-    if (data?.recommendations.length) {
-      setSelectedItem(data.recommendations[0]);
-    }
+    setSelectedItem(firstProfileCompatibleRecommendation(data));
   }, [data]);
 
   useEffect(() => {
@@ -131,7 +137,7 @@ export default function App() {
 
     try {
       const response = await run(profile);
-      setSelectedItem(response.recommendations[0]);
+      setSelectedItem(firstProfileCompatibleRecommendation(response));
       setActivePage("results");
     } catch (requestError) {
       if (isUnauthorizedError(requestError)) {

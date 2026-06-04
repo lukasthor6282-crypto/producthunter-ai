@@ -16,11 +16,12 @@ type RecommendationResultsProps = {
 };
 
 export function RecommendationResults({ data, selectedItem, onSelect, onEditProfile, onOpenDetail, onSimulate }: RecommendationResultsProps) {
-  const items = data?.recommendations ?? [];
-  const best = selectedItem ?? items[0];
+  const responseProfile = data?.profile;
+  const items = responseProfile ? (data?.recommendations ?? []).filter((item) => item.product.niche === responseProfile.niche) : data?.recommendations ?? [];
+  const selectedItemInCurrentRanking = selectedItem && items.some((item) => item.product.id === selectedItem.product.id);
+  const best = selectedItemInCurrentRanking ? selectedItem : items[0];
 
   if (!items.length || !best || !data) {
-    const profile = data?.profile;
     const hasGeneratedEmptyState = Boolean(data && !items.length);
 
     return (
@@ -34,11 +35,11 @@ export function RecommendationResults({ data, selectedItem, onSelect, onEditProf
             ? data?.message ?? "Nao encontrei produtos do nicho informado que respeitem a verba e o tipo de operacao escolhidos."
             : "O resultado aparece aqui com score, margem, lucro, conversao, concorrencia, risco, motivo e estrategia."}
         </p>
-        {profile ? (
+        {responseProfile ? (
           <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-            <ProfileChip tone="orange">{profileOptionLabel("marketplace", profile.marketplace)}</ProfileChip>
-            <ProfileChip tone="green">{profileOptionLabel("niche", profile.niche)}</ProfileChip>
-            <ProfileChip tone="orange">{profileOptionLabel("investment_range", profile.investment_range).replace("R$ ", "R$")}</ProfileChip>
+            <ProfileChip tone="orange">{profileOptionLabel("marketplace", responseProfile.marketplace)}</ProfileChip>
+            <ProfileChip tone="green">{profileOptionLabel("niche", responseProfile.niche)}</ProfileChip>
+            <ProfileChip tone="orange">{profileOptionLabel("investment_range", responseProfile.investment_range).replace("R$ ", "R$")}</ProfileChip>
           </div>
         ) : null}
         {onEditProfile ? (

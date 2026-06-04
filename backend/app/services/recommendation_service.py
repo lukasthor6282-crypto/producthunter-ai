@@ -121,6 +121,9 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
         ),
         reverse=True,
     )
+    recommendations = [
+        item for item in recommendations if item.product.niche == request.niche
+    ]
     applied_filters = {
         "marketplace": request.marketplace,
         "niche": request.niche,
