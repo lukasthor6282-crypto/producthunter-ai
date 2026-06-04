@@ -9,8 +9,13 @@ router = APIRouter(tags=["products"])
 
 
 @router.get("/products", response_model=list[Product])
-def list_products(limit: int = Query(default=50, ge=1, le=500)) -> list[Product]:
-    return get_provider().list_products()[:limit]
+def list_products(
+    marketplace: str | None = None,
+    niche: str | None = None,
+    query: str | None = None,
+    limit: int = Query(default=50, ge=1, le=500),
+) -> list[Product]:
+    return _filter_products(marketplace=marketplace, niche=niche, query=query, limit=limit)
 
 
 @router.get("/products/search", response_model=list[Product])
@@ -19,6 +24,15 @@ def search_products(
     niche: str | None = None,
     query: str | None = None,
     limit: int = Query(default=30, ge=1, le=100),
+) -> list[Product]:
+    return _filter_products(marketplace=marketplace, niche=niche, query=query, limit=limit)
+
+
+def _filter_products(
+    marketplace: str | None,
+    niche: str | None,
+    query: str | None,
+    limit: int,
 ) -> list[Product]:
     products = get_provider().list_products()
     marketplace_slug = normalize_alias(marketplace, MARKETPLACE_ALIASES) if marketplace else None
