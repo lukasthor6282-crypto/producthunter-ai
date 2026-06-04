@@ -224,6 +224,15 @@ def budget_compatibility_threshold(profile: UserProfile) -> float:
     return 58
 
 
+def is_budget_compatible(product: Product, profile: UserProfile) -> bool:
+    if profile.operation_type == "affiliate":
+        return True
+
+    _, max_budget = get_investment_bounds(profile.investment_range)
+    startup_investment = calculate_required_startup_investment(product, profile)
+    return startup_investment <= max_budget
+
+
 def calculate_investment_fit(product: Product, profile: UserProfile) -> float:
     min_budget, max_budget = get_investment_bounds(profile.investment_range)
     startup_investment = calculate_required_startup_investment(product, profile)

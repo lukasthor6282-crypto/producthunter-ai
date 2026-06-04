@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.data_providers.product_provider import get_provider
+from app.schemas.product_schema import Product
 from app.schemas.recommendation_schema import (
     RecommendationItem,
     RecommendationRequest,
@@ -16,6 +17,7 @@ from app.services.scoring_service import (
     calculate_conversion_probability,
     calculate_opportunity_score,
     calculate_risk_score,
+    is_budget_compatible,
 )
 
 
@@ -48,7 +50,7 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
     expanded_for_budget = False
     if exact_matches:
         compatible_exact_count = sum(
-            1 for product in exact_matches if calculate_investment_fit(product, request) >= threshold
+            1 for product in exact_matches if _is_product_viable(product, request, threshold)
         )
         if compatible_exact_count < request.limit:
             seen_ids = {product.id for product in filtered}
@@ -58,7 +60,7 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
                 for product in same_niche_matches:
                     if product.id in seen_ids:
                         continue
-                    if calculate_investment_fit(product, request) < threshold:
+                    if not _is_product_viable(product, request, threshold):
                         continue
                     filtered.append(product)
                     seen_ids.add(product.id)
@@ -116,6 +118,7 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
 
     recommendations.sort(
         key=lambda item: (
+            item.product.marketplace == request.marketplace,
             item.score_breakdown.get("investment_fit", 0) >= threshold,
             item.opportunity_score,
         ),
@@ -133,7 +136,7 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
         applied_filters["marketplace_expansion"] = "same_niche_only"
 
     viable_recommendations = [
-        item for item in recommendations if item.score_breakdown.get("investment_fit", 0) >= threshold
+        item for item in recommendations if _is_recommendation_viable(item, request, threshold)
     ]
     if viable_recommendations:
         recommendations = viable_recommendations
@@ -158,4 +161,24 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
         total_candidates=len(filtered),
         recommendations=recommendations[: request.limit],
         applied_filters=applied_filters,
+    )
+
+
+def _is_product_viable(product: Product, request: RecommendationRequest, threshold: float) -> bool:
+    return (
+        product.niche == request.niche
+        and calculate_investment_fit(product, request) >= threshold
+        and is_budget_compatible(product, request)
+    )
+
+
+def _is_recommendation_viable(
+    item: RecommendationItem,
+    request: RecommendationRequest,
+    threshold: float,
+) -> bool:
+    return (
+        item.product.niche == request.niche
+        and item.score_breakdown.get("investment_fit", 0) >= threshold
+        and is_budget_compatible(item.product, request)
     )

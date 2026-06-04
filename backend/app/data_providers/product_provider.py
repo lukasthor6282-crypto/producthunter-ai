@@ -18,6 +18,7 @@ from app.utils.constants import MARKETPLACES, NICHES
 DUMMYJSON_URL = "https://dummyjson.com/products"
 MERCADO_LIVRE_SEARCH_URL = "https://api.mercadolibre.com/sites/MLB/search"
 BRL_PER_USD = 5.2
+MIN_PRODUCTS_PER_SEGMENT = 4
 
 MARKETPLACE_BY_INDEX = [marketplace["value"] for marketplace in MARKETPLACES]
 MARKETPLACE_LABELS = {marketplace["value"]: marketplace["label"] for marketplace in MARKETPLACES}
@@ -128,12 +129,12 @@ class HybridProductProvider:
         if source in {"auto", "mercado_livre"}:
             mercado_livre_products = self._fetch_mercado_livre_products()
             if mercado_livre_products:
-                return mercado_livre_products
+                return self._ensure_catalog_coverage(mercado_livre_products)
 
         if source in {"auto", "dummyjson", "catalog"}:
             catalog_products = self._fetch_dummyjson_products()
             if catalog_products:
-                return catalog_products
+                return self._ensure_catalog_coverage(catalog_products)
 
         return self._fallback_products()
 
@@ -186,12 +187,34 @@ class HybridProductProvider:
         return [
             product.model_copy(
                 update={
+                    "id": _stable_product_id(f"simulated_fallback:{product.id}"),
                     "source": "simulated_fallback",
+                    "source_product_id": f"simulated_fallback:{product.id}",
                     "image_url": _placeholder_image_url(product.name),
                 }
             )
             for product in self._fallback.list_products()
         ]
+
+    def _ensure_catalog_coverage(self, products: list[Product]) -> list[Product]:
+        counts: dict[tuple[str, str], int] = {}
+        for product in products:
+            key = (product.niche, product.marketplace)
+            counts[key] = counts.get(key, 0) + 1
+
+        covered_products = list(products)
+        existing_ids = {product.id for product in covered_products}
+        for product in self._fallback_products():
+            key = (product.niche, product.marketplace)
+            if counts.get(key, 0) >= MIN_PRODUCTS_PER_SEGMENT:
+                continue
+            if product.id in existing_ids:
+                continue
+            covered_products.append(product)
+            existing_ids.add(product.id)
+            counts[key] = counts.get(key, 0) + 1
+
+        return _dedupe_products(covered_products)
 
 
 @lru_cache(maxsize=1)

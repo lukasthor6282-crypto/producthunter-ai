@@ -5,6 +5,13 @@ from app.ml.features import build_feature_frame
 from app.ml.metrics import interpret_score, safe_percent
 from app.ml.train_model import TARGET_COLUMNS, train_opportunity_model
 from app.schemas.ml_schema import MLPredictionRequest, MLPredictionResponse
+from app.schemas.product_schema import Product
+from app.services.scoring_service import (
+    budget_compatibility_threshold,
+    calculate_investment_fit,
+    calculate_opportunity_score,
+    is_budget_compatible,
+)
 
 
 def predict_for_request(request: MLPredictionRequest) -> MLPredictionResponse:
@@ -13,11 +20,16 @@ def predict_for_request(request: MLPredictionRequest) -> MLPredictionResponse:
     product = provider.get_product(request.product_id) if request.product_id else None
     same_niche_products = [item for item in products if item.niche == request.profile.niche]
 
-    if product is None or product.niche != request.profile.niche:
-        product = next(
-            (item for item in same_niche_products if item.marketplace == request.profile.marketplace),
-            same_niche_products[0] if same_niche_products else None,
-        )
+    threshold = budget_compatibility_threshold(request.profile)
+    product_is_compatible = (
+        product is not None
+        and product.niche == request.profile.niche
+        and calculate_investment_fit(product, request.profile) >= threshold
+        and is_budget_compatible(product, request.profile)
+    )
+
+    if not product_is_compatible:
+        product = _select_profile_product(same_niche_products, request, threshold)
 
     if product is None:
         raise ValueError("Nenhum produto encontrado no nicho informado para a analise de ML.")
@@ -44,3 +56,34 @@ def predict_for_request(request: MLPredictionRequest) -> MLPredictionResponse:
         top_features=top_features,
         metrics=artifact.metrics,
     )
+
+
+def _select_profile_product(
+    products: list[Product],
+    request: MLPredictionRequest,
+    threshold: float,
+) -> Product | None:
+    if not products:
+        return None
+
+    scored_products: list[tuple[bool, bool, float, Product]] = []
+    for product in products:
+        investment_fit = calculate_investment_fit(product, request.profile)
+        budget_compatible = is_budget_compatible(product, request.profile)
+        if investment_fit < threshold or not budget_compatible:
+            continue
+        score, _ = calculate_opportunity_score(product, request.profile)
+        scored_products.append(
+            (
+                product.marketplace == request.profile.marketplace,
+                True,
+                score,
+                product,
+            )
+        )
+
+    if not scored_products:
+        return None
+
+    scored_products.sort(key=lambda item: item[:3], reverse=True)
+    return scored_products[0][3]
