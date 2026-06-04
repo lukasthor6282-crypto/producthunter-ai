@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.data_providers.simulated_provider import get_provider
+from app.data_providers.product_provider import get_provider
 from app.ml.features import build_feature_frame
 from app.ml.metrics import interpret_score, safe_percent
 from app.ml.train_model import TARGET_COLUMNS, train_opportunity_model

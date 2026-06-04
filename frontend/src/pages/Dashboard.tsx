@@ -18,6 +18,7 @@ import {
 } from "recharts";
 
 import { useProducts } from "../hooks/useProducts";
+import { ProductImage } from "../components/product/ProductImage";
 import { percent } from "../services/format";
 import type { Product } from "../types/product";
 
@@ -267,6 +268,7 @@ function OpportunityRow({ product, rank }: { product: Product | (typeof fallback
     <div className={rank === 1 ? "data-row-highlight p-4" : "data-row p-4"}>
       <div className="grid items-center gap-4 md:grid-cols-[42px_1fr_72px_72px]">
         <span className="font-mono text-sm font-black text-slate-600">#{rank}</span>
+        <ProductImage product={product} className="h-14 w-14" />
         <div className="min-w-0">
           <p className="truncate font-black text-white">{product.name}</p>
           <div className="mt-2 flex flex-wrap gap-2">

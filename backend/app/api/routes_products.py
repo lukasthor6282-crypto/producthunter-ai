@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 
-from app.data_providers.simulated_provider import get_provider
+from app.data_providers.product_provider import get_provider
 from app.schemas.product_schema import Product
 from app.utils.constants import MARKETPLACE_ALIASES, NICHE_ALIASES
 from app.utils.normalization import normalize_alias

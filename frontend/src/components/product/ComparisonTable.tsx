@@ -3,6 +3,7 @@ import type { RecommendationItem } from "../../types/recommendation";
 import { OpportunityScoreRing } from "../dashboard/OpportunityScoreRing";
 import { GlassCard } from "../ui/GlassCard";
 import { MarketplaceBadge } from "./MarketplaceBadge";
+import { ProductImage } from "./ProductImage";
 import { RiskIndicator } from "./RiskIndicator";
 
 type ComparisonTableProps = {
@@ -23,9 +24,12 @@ export function ComparisonTable({ items }: ComparisonTableProps) {
         {rows.map((item) => (
           <article key={item.product.id} className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
             <div className="flex min-w-0 items-start justify-between gap-3">
-              <div className="min-w-0">
-                <MarketplaceBadge marketplace={item.product.marketplace} label={item.product.marketplace_label} />
-                <h3 className="mt-2 break-words text-sm font-extrabold leading-tight text-white">{item.product.name}</h3>
+              <div className="flex min-w-0 gap-3">
+                <ProductImage product={item.product} className="h-14 w-14" />
+                <div className="min-w-0">
+                  <MarketplaceBadge marketplace={item.product.marketplace} label={item.product.marketplace_label} />
+                  <h3 className="mt-2 break-words text-sm font-extrabold leading-tight text-white">{item.product.name}</h3>
+                </div>
               </div>
               <OpportunityScoreRing score={item.opportunity_score} size="xs" />
             </div>
@@ -59,7 +63,12 @@ export function ComparisonTable({ items }: ComparisonTableProps) {
           <tbody>
             {rows.map((item) => (
               <tr key={item.product.id} className="border-b border-white/[0.07] last:border-b-0">
-                <td className="px-5 py-4 font-bold text-white">{item.product.name}</td>
+                <td className="px-5 py-4 font-bold text-white">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <ProductImage product={item.product} className="h-11 w-11" />
+                    <span className="truncate">{item.product.name}</span>
+                  </div>
+                </td>
                 <td className="mono-number px-4 py-4 font-bold text-mint">{item.opportunity_score.toFixed(0)}/100</td>
                 <td className="mono-number px-4 py-4 font-bold text-white">{percent(item.estimated_margin_percent)}</td>
                 <td className="mono-number px-4 py-4 font-bold text-white">{brl.format(item.estimated_profit)}</td>

@@ -1,4 +1,4 @@
-import { Package, Star, Truck } from "lucide-react";
+import { ExternalLink, Package, Star, Truck } from "lucide-react";
 
 import { ConversionChart } from "../charts/ConversionChart";
 import { MarginChart } from "../charts/MarginChart";
@@ -6,6 +6,7 @@ import { OpportunityScoreRing } from "../dashboard/OpportunityScoreRing";
 import { AIExplanationPanel } from "../recommendation/AIExplanationPanel";
 import { GlassCard } from "../ui/GlassCard";
 import { MarketplaceBadge } from "./MarketplaceBadge";
+import { ProductImage } from "./ProductImage";
 import { RiskIndicator } from "./RiskIndicator";
 import { brl, compactNumber, percent } from "../../services/format";
 import type { RecommendationItem } from "../../types/recommendation";
@@ -32,15 +33,34 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <GlassCard className="p-4 md:p-6" variant="strong" interactive>
           <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-            <div className="min-w-0">
+            <div className="flex min-w-0 flex-col gap-4 sm:flex-row">
+              <ProductImage product={item.product} className="h-32 w-full sm:h-36 sm:w-36" iconSize={34} />
+              <div className="min-w-0">
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 <MarketplaceBadge marketplace={item.product.marketplace} label={item.product.marketplace_label} />
                 <span className="rounded-md border border-white/10 bg-white/[0.055] px-2.5 py-1 text-xs font-bold text-mist">
                   {item.product.niche_label}
                 </span>
+                {item.product.source !== "simulated" && (
+                  <span className="rounded-md border border-mint/20 bg-mint/10 px-2.5 py-1 text-xs font-bold text-mint">
+                    Produto real
+                  </span>
+                )}
               </div>
               <h2 className="text-2xl font-extrabold leading-tight text-white md:text-3xl">{item.product.name}</h2>
               <p className="mt-4 text-sm leading-7 text-mist">{item.explanation}</p>
+              {item.product.product_url && (
+                <a
+                  href={item.product.product_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-md border border-cyan-300/25 bg-cyan-300/10 px-3 text-sm font-black text-cyan-200 transition hover:border-cyan-300/45 hover:bg-cyan-300/15"
+                >
+                  Ver fonte do produto
+                  <ExternalLink size={15} />
+                </a>
+              )}
+              </div>
             </div>
             <OpportunityScoreRing score={item.opportunity_score} size="lg" />
           </div>

@@ -13,7 +13,7 @@ from sklearn.multioutput import MultiOutputRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from app.data_providers.simulated_provider import get_provider
+from app.data_providers.product_provider import get_provider
 from app.ml.features import FEATURE_COLUMNS, build_feature_frame
 from app.schemas.profile_schema import UserProfile
 from app.services.profit_service import calculate_product_profit

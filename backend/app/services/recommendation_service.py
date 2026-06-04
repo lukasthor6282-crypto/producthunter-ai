@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.data_providers.simulated_provider import get_provider
+from app.data_providers.product_provider import get_provider
 from app.schemas.recommendation_schema import (
     RecommendationItem,
     RecommendationRequest,

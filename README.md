@@ -94,6 +94,16 @@ Para producao com HTTPS, use `SESSION_COOKIE_SECURE=true`. O banco padrao e SQLi
 $env:DATABASE_URL="postgresql+psycopg://usuario:senha@host:5432/producthunter"
 ```
 
+#### Coleta real de produtos
+
+Por padrao, o backend usa `PRODUCT_SOURCE=auto`: tenta Mercado Livre quando houver token e, se nao houver, usa um catalogo publico de produtos com fotos. Para ativar busca oficial do Mercado Livre, configure:
+
+```powershell
+$env:PRODUCT_SOURCE="auto"
+$env:MERCADO_LIVRE_ACCESS_TOKEN="seu-token-mercado-livre"
+$env:PRODUCT_CATALOG_TTL_SECONDS="900"
+```
+
 #### Assinaturas com Stripe
 
 Planos sugeridos para o MVP:

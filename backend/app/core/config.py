@@ -30,6 +30,9 @@ class Settings(BaseModel):
     stripe_price_starter: str | None = None
     stripe_price_pro: str | None = None
     stripe_price_scale: str | None = None
+    product_source: str = "auto"
+    mercado_livre_access_token: str | None = None
+    product_catalog_ttl_seconds: int = 900
     session_cookie_name: str = "producthunter_session"
     session_cookie_secure: bool = False
     session_cookie_samesite: str = "lax"
@@ -79,6 +82,9 @@ def get_settings() -> Settings:
         stripe_price_starter=getenv("STRIPE_PRICE_STARTER") or None,
         stripe_price_pro=getenv("STRIPE_PRICE_PRO") or None,
         stripe_price_scale=getenv("STRIPE_PRICE_SCALE") or None,
+        product_source=getenv("PRODUCT_SOURCE", "auto").strip().lower(),
+        mercado_livre_access_token=getenv("MERCADO_LIVRE_ACCESS_TOKEN") or None,
+        product_catalog_ttl_seconds=int(getenv("PRODUCT_CATALOG_TTL_SECONDS", "900")),
         session_cookie_name=getenv("SESSION_COOKIE_NAME", "producthunter_session"),
         session_cookie_secure=session_cookie_secure,
         session_cookie_samesite=session_cookie_samesite,

@@ -4,6 +4,7 @@ import { brl, compactNumber, percent } from "../../services/format";
 import type { RecommendationItem } from "../../types/recommendation";
 import { OpportunityScoreRing } from "../dashboard/OpportunityScoreRing";
 import { MarketplaceBadge } from "../product/MarketplaceBadge";
+import { ProductImage } from "../product/ProductImage";
 import { RiskIndicator } from "../product/RiskIndicator";
 import { GlassCard } from "../ui/GlassCard";
 
@@ -32,15 +33,18 @@ export function ProductRankingTable({ items, selectedId, onSelect }: ProductRank
               }`}
             >
               <div className="flex min-w-0 items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <span className="mono-number flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.07] text-sm font-extrabold text-white">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <MarketplaceBadge marketplace={item.product.marketplace} label={item.product.marketplace_label} />
+                <div className="flex min-w-0 gap-3">
+                  <ProductImage product={item.product} className="h-14 w-14" />
+                  <div className="min-w-0">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <span className="mono-number flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.07] text-sm font-extrabold text-white">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <MarketplaceBadge marketplace={item.product.marketplace} label={item.product.marketplace_label} />
+                    </div>
+                    <h3 className="break-words text-sm font-extrabold leading-tight text-white">{item.product.name}</h3>
+                    <p className="mt-1 text-xs font-bold text-mist">{item.product.niche_label}</p>
                   </div>
-                  <h3 className="break-words text-sm font-extrabold leading-tight text-white">{item.product.name}</h3>
-                  <p className="mt-1 text-xs font-bold text-mist">{item.product.niche_label}</p>
                 </div>
                 <OpportunityScoreRing score={item.opportunity_score} size="xs" />
               </div>
@@ -95,6 +99,7 @@ export function ProductRankingTable({ items, selectedId, onSelect }: ProductRank
                 >
                   <td className="max-w-[310px] px-5 py-4">
                     <div className="flex items-start gap-3">
+                      <ProductImage product={item.product} className="h-12 w-12" />
                       <span className="mono-number flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.07] font-extrabold text-white">
                         {String(index + 1).padStart(2, "0")}
                       </span>

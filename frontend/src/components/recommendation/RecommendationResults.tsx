@@ -3,6 +3,7 @@ import { Bot, Calculator, Filter, Pencil, Search, SlidersHorizontal, Sparkles, Z
 
 import { brl, percent } from "../../services/format";
 import type { RecommendationItem, RecommendationResponse } from "../../types/recommendation";
+import { ProductImage } from "../product/ProductImage";
 import { profileOptionLabel } from "../../types/userProfile";
 
 type RecommendationResultsProps = {
@@ -118,10 +119,13 @@ function BestProductCard({ item, rank, onOpenDetail, onSimulate }: { item: Recom
   return (
     <article className="kombai-card border-cyan-300/24 bg-[#0b111b]/92 p-4 md:p-7">
       <div className="mb-6 flex flex-col gap-5 lg:mb-8 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex items-start gap-5">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 text-xl font-black text-[#07090d] shadow-[0_0_36px_rgba(248,184,92,0.28)]">
-            1
-          </span>
+        <div className="flex items-start gap-4 md:gap-5">
+          <div className="relative shrink-0">
+            <ProductImage product={item.product} className="h-20 w-20 md:h-24 md:w-24" iconSize={28} />
+            <span className="absolute -left-2 -top-2 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-orange-500 text-lg font-black text-[#07090d] shadow-[0_0_36px_rgba(248,184,92,0.28)]">
+              1
+            </span>
+          </div>
           <div>
             <div className="mb-3 flex flex-wrap gap-2">
               <span className="kombai-chip kombai-chip-cyan">#{rank} escolha da IA</span>
@@ -179,8 +183,13 @@ function ResultRow({ item, rank, selected, onClick }: { item: RecommendationItem
             <span className="font-mono text-sm font-black text-slate-500">#{rank}</span>
             <span className="kombai-chip kombai-chip-orange">{item.product.marketplace_label}</span>
           </div>
-          <h3 className="text-lg font-black text-white">{item.product.name}</h3>
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">"{item.explanation}"</p>
+          <div className="flex min-w-0 gap-3">
+            <ProductImage product={item.product} className="h-14 w-14" />
+            <div className="min-w-0">
+              <h3 className="text-lg font-black text-white">{item.product.name}</h3>
+              <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">"{item.explanation}"</p>
+            </div>
+          </div>
         </div>
         <div className="grid min-w-0 grid-cols-2 gap-2 sm:min-w-[300px] sm:grid-cols-4">
           <MiniMetric label="Score" value={item.opportunity_score.toFixed(0)} />

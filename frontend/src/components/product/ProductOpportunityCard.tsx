@@ -7,6 +7,7 @@ import { TiltCard3D } from "../ui/TiltCard3D";
 import { brl, compactNumber, percent } from "../../services/format";
 import type { RecommendationItem } from "../../types/recommendation";
 import { MarketplaceBadge } from "./MarketplaceBadge";
+import { ProductImage } from "./ProductImage";
 import { RiskIndicator } from "./RiskIndicator";
 
 type ProductOpportunityCardProps = {
@@ -23,9 +24,12 @@ export function ProductOpportunityCard({ item, rank, onSelect, compact = false }
         <div className="absolute right-0 top-0 h-1 w-full bg-[linear-gradient(90deg,transparent,rgba(98,230,255,0.45),rgba(101,240,183,0.35),transparent)] opacity-0 transition group-hover:opacity-100" />
         <div className={`flex min-w-0 flex-col gap-4 ${compact ? "" : "xl:flex-row xl:items-center"}`}>
           <div className="flex min-w-0 flex-1 gap-3 sm:gap-4">
-            <div className="mono-number relative flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/[0.08] text-lg font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-              {rank === 1 && <Sparkles className="absolute -right-1 -top-1 text-mint" size={14} />}
-              {String(rank).padStart(2, "0")}
+            <div className="relative shrink-0">
+              <ProductImage product={item.product} className="h-16 w-16 sm:h-20 sm:w-20" iconSize={24} />
+              <span className="mono-number absolute -left-2 -top-2 flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-[#0b111b] text-xs font-extrabold text-white shadow-[0_10px_28px_rgba(0,0,0,0.38)]">
+                {rank === 1 && <Sparkles className="absolute -right-1 -top-1 text-mint" size={12} />}
+                {String(rank).padStart(2, "0")}
+              </span>
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">

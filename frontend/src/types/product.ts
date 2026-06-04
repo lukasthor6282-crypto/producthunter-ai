@@ -6,6 +6,10 @@ export type Product = {
   niche: string;
   niche_label: string;
   category: string;
+  image_url?: string | null;
+  product_url?: string | null;
+  source: string;
+  source_product_id?: string | null;
   average_price: number;
   min_price: number;
   max_price: number;

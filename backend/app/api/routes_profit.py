@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.data_providers.simulated_provider import get_provider
+from app.data_providers.product_provider import get_provider
 from app.dependencies.auth import get_current_user
 from app.models.auth_models import User
 from app.schemas.profit_schema import ProfitSimulationRequest, ProfitSimulationResponse

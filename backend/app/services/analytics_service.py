@@ -1,6 +1,6 @@
 import pandas as pd
 
-from app.data_providers.simulated_provider import get_provider
+from app.data_providers.product_provider import get_provider
 from app.services.profit_service import calculate_product_profit
 from app.services.scoring_service import (
     calculate_conversion_probability,

@@ -52,6 +52,16 @@ $env:SESSION_COOKIE_SECURE="true"
 
 Em producao, mantenha HTTPS ativo, use `SESSION_COOKIE_SECURE=true` e restrinja `CORS_ORIGINS` ao dominio real do SaaS.
 
+## Produtos reais com fotos
+
+O provider principal usa `PRODUCT_SOURCE=auto`. Ele tenta a API oficial do Mercado Livre quando `MERCADO_LIVRE_ACCESS_TOKEN` estiver configurado e, se nao conseguir, usa um catalogo publico com imagens para manter a experiencia visual.
+
+```powershell
+$env:PRODUCT_SOURCE="auto"
+$env:MERCADO_LIVRE_ACCESS_TOKEN="seu-token-mercado-livre"
+$env:PRODUCT_CATALOG_TTL_SECONDS="900"
+```
+
 ## Estrutura
 
 ```text

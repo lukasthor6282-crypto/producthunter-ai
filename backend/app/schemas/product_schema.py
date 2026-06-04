@@ -11,6 +11,10 @@ class Product(BaseModel):
     niche: str
     niche_label: str
     category: str
+    image_url: str | None = None
+    product_url: str | None = None
+    source: str = "simulated"
+    source_product_id: str | None = None
     average_price: float = Field(gt=0)
     min_price: float = Field(gt=0)
     max_price: float = Field(gt=0)
