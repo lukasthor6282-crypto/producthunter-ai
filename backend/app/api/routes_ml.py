@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.dependencies.auth import get_current_user
 from app.ml.features import FEATURE_COLUMNS
@@ -15,7 +15,10 @@ def predict(
     request: MLPredictionRequest,
     _: User = Depends(get_current_user),
 ) -> MLPredictionResponse:
-    return predict_for_request(request)
+    try:
+        return predict_for_request(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/ml/explain")

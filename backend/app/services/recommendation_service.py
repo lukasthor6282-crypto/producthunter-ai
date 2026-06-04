@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from app.data_providers.product_provider import get_provider
-from app.schemas.product_schema import Product
 from app.schemas.recommendation_schema import (
     RecommendationItem,
     RecommendationRequest,
@@ -22,24 +21,27 @@ from app.services.scoring_service import (
 
 def generate_recommendations(request: RecommendationRequest) -> RecommendationResponse:
     products = get_provider().list_products()
+    same_niche_matches = [product for product in products if product.niche == request.niche]
     exact_matches = [
         product
-        for product in products
-        if product.marketplace == request.marketplace and product.niche == request.niche
+        for product in same_niche_matches
+        if product.marketplace == request.marketplace
     ]
 
-    same_niche_matches = [product for product in products if product.niche == request.niche]
-    same_marketplace_matches = [product for product in products if product.marketplace == request.marketplace]
-    related_matches = _unique_products([*same_niche_matches, *same_marketplace_matches])
-
-    filtered = exact_matches or related_matches
+    # Nicho e uma restricao dura. Marketplace pode flexibilizar, mas nunca
+    # recomendamos um produto fora do nicho escolhido pelo cliente.
+    filtered = exact_matches or same_niche_matches
     if not filtered:
         return RecommendationResponse(
             profile=request,
             total_candidates=0,
             recommendations=[],
-            applied_filters={"marketplace": request.marketplace, "niche": request.niche},
-            message="Nenhum produto encontrado para os filtros informados.",
+            applied_filters={
+                "marketplace": request.marketplace,
+                "niche": request.niche,
+                "niche_strict": "true",
+            },
+            message="Nenhum produto encontrado no nicho informado.",
         )
 
     threshold = budget_compatibility_threshold(request)
@@ -64,17 +66,6 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
                     expanded_for_budget = True
                     if compatible_count >= request.limit:
                         break
-
-            if compatible_count == 0:
-                for product in same_marketplace_matches:
-                    if product.id in seen_ids:
-                        continue
-                    if calculate_investment_fit(product, request) < threshold:
-                        continue
-                    filtered.append(product)
-                    seen_ids.add(product.id)
-                    expanded_for_budget = True
-                    break
 
     recommendations: list[RecommendationItem] = []
     for product in filtered:
@@ -130,9 +121,13 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
         ),
         reverse=True,
     )
-    applied_filters = {"marketplace": request.marketplace, "niche": request.niche}
+    applied_filters = {
+        "marketplace": request.marketplace,
+        "niche": request.niche,
+        "niche_strict": "true",
+    }
     if expanded_for_budget:
-        applied_filters["budget_expansion"] = "same_niche_first"
+        applied_filters["marketplace_expansion"] = "same_niche_only"
 
     viable_recommendations = [
         item for item in recommendations if item.score_breakdown.get("investment_fit", 0) >= threshold
@@ -140,6 +135,20 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
     if viable_recommendations:
         recommendations = viable_recommendations
         applied_filters["budget_filter"] = "compatible_only"
+    elif request.operation_type != "affiliate":
+        return RecommendationResponse(
+            profile=request,
+            total_candidates=len(filtered),
+            recommendations=[],
+            applied_filters={
+                **applied_filters,
+                "budget_filter": "no_compatible_products",
+            },
+            message=(
+                "Encontrei produtos no nicho informado, mas nenhum compativel com a faixa "
+                "de investimento e tipo de operacao escolhidos."
+            ),
+        )
 
     return RecommendationResponse(
         profile=request,
@@ -147,14 +156,3 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
         recommendations=recommendations[: request.limit],
         applied_filters=applied_filters,
     )
-
-
-def _unique_products(products: list[Product]) -> list[Product]:
-    seen_ids: set[int] = set()
-    unique = []
-    for product in products:
-        if product.id in seen_ids:
-            continue
-        seen_ids.add(product.id)
-        unique.append(product)
-    return unique

@@ -20,13 +20,33 @@ export function RecommendationResults({ data, selectedItem, onSelect, onEditProf
   const best = selectedItem ?? items[0];
 
   if (!items.length || !best || !data) {
+    const profile = data?.profile;
+    const hasGeneratedEmptyState = Boolean(data && !items.length);
+
     return (
       <div className="kombai-card p-8">
-        <span className="kombai-chip kombai-chip-cyan">Ranking vazio</span>
-        <h1 className="mt-4 text-3xl font-black text-white">Gere um perfil para ver oportunidades.</h1>
+        <span className="kombai-chip kombai-chip-cyan">{hasGeneratedEmptyState ? "Sem produto compativel" : "Ranking vazio"}</span>
+        <h1 className="mt-4 text-3xl font-black text-white">
+          {hasGeneratedEmptyState ? "Nenhuma oportunidade segura para este perfil." : "Gere um perfil para ver oportunidades."}
+        </h1>
         <p className="mt-3 max-w-2xl text-slate-400">
-          O resultado aparece aqui com score, margem, lucro, conversão, concorrência, risco, motivo e estratégia.
+          {hasGeneratedEmptyState
+            ? data?.message ?? "Nao encontrei produtos do nicho informado que respeitem a verba e o tipo de operacao escolhidos."
+            : "O resultado aparece aqui com score, margem, lucro, conversao, concorrencia, risco, motivo e estrategia."}
         </p>
+        {profile ? (
+          <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+            <ProfileChip tone="orange">{profileOptionLabel("marketplace", profile.marketplace)}</ProfileChip>
+            <ProfileChip tone="green">{profileOptionLabel("niche", profile.niche)}</ProfileChip>
+            <ProfileChip tone="orange">{profileOptionLabel("investment_range", profile.investment_range).replace("R$ ", "R$")}</ProfileChip>
+          </div>
+        ) : null}
+        {onEditProfile ? (
+          <button className="kombai-btn mt-6 w-fit" onClick={onEditProfile}>
+            <Pencil size={16} />
+            Editar perfil
+          </button>
+        ) : null}
       </div>
     );
   }

@@ -11,15 +11,16 @@ def predict_for_request(request: MLPredictionRequest) -> MLPredictionResponse:
     provider = get_provider()
     products = provider.list_products()
     product = provider.get_product(request.product_id) if request.product_id else None
-    if product is None:
+    same_niche_products = [item for item in products if item.niche == request.profile.niche]
+
+    if product is None or product.niche != request.profile.niche:
         product = next(
-            (
-                item
-                for item in products
-                if item.marketplace == request.profile.marketplace and item.niche == request.profile.niche
-            ),
-            products[0],
+            (item for item in same_niche_products if item.marketplace == request.profile.marketplace),
+            same_niche_products[0] if same_niche_products else None,
         )
+
+    if product is None:
+        raise ValueError("Nenhum produto encontrado no nicho informado para a analise de ML.")
 
     # Durante a previsao, passamos novas features para o modelo treinado.
     # O resultado e uma estimativa dos targets aprendidos no treino.
