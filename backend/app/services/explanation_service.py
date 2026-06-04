@@ -2,6 +2,10 @@ from app.schemas.product_schema import Product
 from app.schemas.profile_schema import UserProfile
 
 
+def _format_brl(value: float) -> str:
+    return f"R$ {value:,.0f}".replace(",", ".")
+
+
 TARGET_AUDIENCES = {
     "technology": "compradores que buscam praticidade, gadgets acessiveis e upgrades rapidos",
     "beauty": "publico de autocuidado, creators de beleza e compradores recorrentes",
@@ -94,7 +98,13 @@ def build_warnings(product: Product, risk_score: float, score_breakdown: dict[st
     if product.return_risk >= 55:
         warnings.append("Risco de devolucao relevante; capriche na descricao e expectativa do anuncio.")
     if score_breakdown.get("investment_fit", 100) < 55:
-        warnings.append("Produto pressiona a faixa de investimento informada.")
+        startup_investment = score_breakdown.get("startup_investment")
+        if startup_investment:
+            warnings.append(
+                f"Investimento inicial estimado de {_format_brl(startup_investment)} pressiona a verba informada."
+            )
+        else:
+            warnings.append("Produto pressiona a faixa de investimento informada.")
     if product.competitors_count >= 260:
         warnings.append("Concorrencia numerosa; sera importante diferenciar titulo, imagem e oferta.")
     return warnings[:3]

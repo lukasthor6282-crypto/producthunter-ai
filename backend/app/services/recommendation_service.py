@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.data_providers.product_provider import get_provider
+from app.schemas.product_schema import Product
 from app.schemas.recommendation_schema import (
     RecommendationItem,
     RecommendationRequest,
@@ -10,7 +11,9 @@ from app.services.explanation_service import build_explanation, build_strategy, 
 from app.services.explanation_service import build_decision_factors, build_warnings
 from app.services.profit_service import calculate_product_profit
 from app.services.scoring_service import (
+    budget_compatibility_threshold,
     calculate_competition_score,
+    calculate_investment_fit,
     calculate_conversion_probability,
     calculate_opportunity_score,
     calculate_risk_score,
@@ -19,18 +22,17 @@ from app.services.scoring_service import (
 
 def generate_recommendations(request: RecommendationRequest) -> RecommendationResponse:
     products = get_provider().list_products()
-    filtered = [
+    exact_matches = [
         product
         for product in products
         if product.marketplace == request.marketplace and product.niche == request.niche
     ]
 
-    if not filtered:
-        filtered = [
-            product
-            for product in products
-            if product.marketplace == request.marketplace or product.niche == request.niche
-        ]
+    same_niche_matches = [product for product in products if product.niche == request.niche]
+    same_marketplace_matches = [product for product in products if product.marketplace == request.marketplace]
+    related_matches = _unique_products([*same_niche_matches, *same_marketplace_matches])
+
+    filtered = exact_matches or related_matches
     if not filtered:
         return RecommendationResponse(
             profile=request,
@@ -39,6 +41,40 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
             applied_filters={"marketplace": request.marketplace, "niche": request.niche},
             message="Nenhum produto encontrado para os filtros informados.",
         )
+
+    threshold = budget_compatibility_threshold(request)
+    expanded_for_budget = False
+    if exact_matches:
+        compatible_exact_count = sum(
+            1 for product in exact_matches if calculate_investment_fit(product, request) >= threshold
+        )
+        if compatible_exact_count < request.limit:
+            seen_ids = {product.id for product in filtered}
+            compatible_count = compatible_exact_count
+
+            if compatible_count < request.limit:
+                for product in same_niche_matches:
+                    if product.id in seen_ids:
+                        continue
+                    if calculate_investment_fit(product, request) < threshold:
+                        continue
+                    filtered.append(product)
+                    seen_ids.add(product.id)
+                    compatible_count += 1
+                    expanded_for_budget = True
+                    if compatible_count >= request.limit:
+                        break
+
+            if compatible_count == 0:
+                for product in same_marketplace_matches:
+                    if product.id in seen_ids:
+                        continue
+                    if calculate_investment_fit(product, request) < threshold:
+                        continue
+                    filtered.append(product)
+                    seen_ids.add(product.id)
+                    expanded_for_budget = True
+                    break
 
     recommendations: list[RecommendationItem] = []
     for product in filtered:
@@ -87,10 +123,38 @@ def generate_recommendations(request: RecommendationRequest) -> RecommendationRe
             )
         )
 
-    recommendations.sort(key=lambda item: item.opportunity_score, reverse=True)
+    recommendations.sort(
+        key=lambda item: (
+            item.score_breakdown.get("investment_fit", 0) >= threshold,
+            item.opportunity_score,
+        ),
+        reverse=True,
+    )
+    applied_filters = {"marketplace": request.marketplace, "niche": request.niche}
+    if expanded_for_budget:
+        applied_filters["budget_expansion"] = "same_niche_first"
+
+    viable_recommendations = [
+        item for item in recommendations if item.score_breakdown.get("investment_fit", 0) >= threshold
+    ]
+    if viable_recommendations:
+        recommendations = viable_recommendations
+        applied_filters["budget_filter"] = "compatible_only"
+
     return RecommendationResponse(
         profile=request,
         total_candidates=len(filtered),
         recommendations=recommendations[: request.limit],
-        applied_filters={"marketplace": request.marketplace, "niche": request.niche},
+        applied_filters=applied_filters,
     )
+
+
+def _unique_products(products: list[Product]) -> list[Product]:
+    seen_ids: set[int] = set()
+    unique = []
+    for product in products:
+        if product.id in seen_ids:
+            continue
+        seen_ids.add(product.id)
+        unique.append(product)
+    return unique
