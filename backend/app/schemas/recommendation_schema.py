@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 from app.schemas.product_schema import Product
@@ -30,3 +32,27 @@ class RecommendationResponse(BaseModel):
     recommendations: list[RecommendationItem]
     applied_filters: dict[str, str] = Field(default_factory=dict)
     message: str = "Ranking gerado com sucesso."
+
+
+class RecommendationHistoryItem(BaseModel):
+    id: int
+    created_at: datetime
+    profile: UserProfile
+    total_candidates: int
+    returned_count: int
+    message: str
+    top_product_name: str | None = None
+    top_product_marketplace: str | None = None
+    top_product_niche: str | None = None
+    top_opportunity_score: float | None = None
+
+
+class RecommendationHistoryResponse(BaseModel):
+    items: list[RecommendationHistoryItem]
+
+
+class RecommendationUsageResponse(BaseModel):
+    period_month: str
+    generated_count: int
+    monthly_limit: int
+    remaining: int
