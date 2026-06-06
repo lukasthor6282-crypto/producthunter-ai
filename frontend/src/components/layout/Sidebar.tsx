@@ -1,7 +1,7 @@
 import {
-  BarChart3,
   Calculator,
   FlaskConical,
+  History,
   LayoutDashboard,
   LogOut,
   Search,
@@ -23,6 +23,7 @@ export type PageKey =
   | "dashboard"
   | "profile"
   | "results"
+  | "history"
   | "product"
   | "profit"
   | "billing"
@@ -48,7 +49,8 @@ const navItems: NavItem[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "account", label: "Perfil", icon: UserCircle2 },
   { key: "profile", label: "Recomendar", icon: Sparkles },
-  { key: "results", label: "Resultados", icon: Trophy, badge: "5" },
+  { key: "results", label: "Resultados", icon: Trophy },
+  { key: "history", label: "Salvos", icon: History },
   { key: "profit", label: "Simulador", icon: Calculator },
   { key: "ai", label: "Lab de IA", icon: FlaskConical },
 ];
@@ -86,7 +88,7 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
 
         {!isCompact && <div className="hidden h-px bg-white/10 lg:block" />}
 
-        <nav className={cn("grid flex-1 grid-cols-6 gap-1 lg:flex lg:flex-col", isCompact ? "lg:mt-7 lg:gap-3" : "lg:mt-5 lg:gap-2")}>
+        <nav className={cn("grid flex-1 grid-cols-4 gap-1 sm:grid-cols-7 lg:flex lg:flex-col", isCompact ? "lg:mt-7 lg:gap-3" : "lg:mt-5 lg:gap-2")}>
           {!isCompact && (
             <p className="hidden px-1 pb-3 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 lg:block">
               Navegação

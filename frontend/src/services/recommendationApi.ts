@@ -4,6 +4,8 @@ import type {
   MLPrediction,
   ProfitSimulation,
   ProfitSimulationInput,
+  RecommendationHistoryResponse,
+  RecommendationUsage,
   RecommendationResponse,
 } from "../types/recommendation";
 import type { UserProfile } from "../types/userProfile";
@@ -13,6 +15,14 @@ export function generateRecommendations(profile: UserProfile, limit = 8) {
     method: "POST",
     body: JSON.stringify({ ...profile, limit }),
   });
+}
+
+export function getRecommendationHistory(limit = 20) {
+  return apiRequest<RecommendationHistoryResponse>(`/recommendations/history?limit=${limit}`);
+}
+
+export function getRecommendationUsage() {
+  return apiRequest<RecommendationUsage>("/recommendations/usage");
 }
 
 export function simulateProfit(input: ProfitSimulationInput) {

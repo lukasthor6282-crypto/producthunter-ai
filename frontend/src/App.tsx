@@ -9,6 +9,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RecommendationProfile } from "./pages/RecommendationProfile";
+import { RecommendationHistoryPage } from "./pages/RecommendationHistory";
 import { RecommendationResults } from "./pages/RecommendationResults";
 import { ProductDetail } from "./pages/ProductDetail";
 import { ProfitSimulator } from "./pages/ProfitSimulator";
@@ -20,8 +21,8 @@ import { useRecommendations } from "./hooks/useRecommendations";
 import type { RecommendationItem } from "./types/recommendation";
 import { defaultProfile, type UserProfile } from "./types/userProfile";
 
-const protectedPages = new Set<PageKey>(["dashboard", "account", "profile", "results", "product", "profit", "billing", "ai"]);
-const restorablePages = new Set<PageKey>(["dashboard", "account", "profile", "profit", "billing", "ai"]);
+const protectedPages = new Set<PageKey>(["dashboard", "account", "profile", "results", "history", "product", "profit", "billing", "ai"]);
+const restorablePages = new Set<PageKey>(["dashboard", "account", "profile", "history", "profit", "billing", "ai"]);
 const activePageStorageKey = "producthunter.activePage";
 
 function readInitialPage(): PageKey {
@@ -199,6 +200,7 @@ export default function App() {
       account: <AccountPage user={user} onLogout={handleLogout} isLoggingOut={isLoggingOut} />,
       profile: <RecommendationProfile onGenerate={generate} isLoading={isRecommendationLoading} />,
       results: <RecommendationResults data={data} selectedItem={selectedItem} onSelect={setSelectedItem} onNavigate={navigate} />,
+      history: <RecommendationHistoryPage onNavigate={navigate} />,
       product: <ProductDetail item={selectedItem} />,
       profit: <ProfitSimulator item={selectedItem} />,
       billing: <SubscriptionPage />,

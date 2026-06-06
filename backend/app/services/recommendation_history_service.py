@@ -11,6 +11,7 @@ from app.models.recommendation_models import RecommendationRun, RecommendationRu
 from app.schemas.profile_schema import UserProfile
 from app.schemas.recommendation_schema import (
     RecommendationHistoryItem,
+    RecommendationHistoryProduct,
     RecommendationHistoryResponse,
     RecommendationRequest,
     RecommendationResponse,
@@ -142,6 +143,27 @@ def list_recommendation_history(db: Session, user: User, limit: int = 20) -> Rec
     items: list[RecommendationHistoryItem] = []
     for run in runs:
         top_item = run.items[0] if run.items else None
+        saved_products = [
+            RecommendationHistoryProduct(
+                rank=item.rank,
+                product_id=item.product_id,
+                product_name=item.product_name,
+                marketplace=item.marketplace,
+                marketplace_label=item.marketplace_label,
+                niche=item.niche,
+                niche_label=item.niche_label,
+                image_url=item.image_url,
+                product_url=item.product_url,
+                average_price=item.average_price,
+                opportunity_score=item.opportunity_score,
+                estimated_margin_percent=item.estimated_margin_percent,
+                estimated_profit=item.estimated_profit,
+                conversion_probability=item.conversion_probability,
+                competition_score=item.competition_score,
+                risk_score=item.risk_score,
+            )
+            for item in run.items
+        ]
         items.append(
             RecommendationHistoryItem(
                 id=run.id,
@@ -162,6 +184,7 @@ def list_recommendation_history(db: Session, user: User, limit: int = 20) -> Rec
                 top_product_marketplace=top_item.marketplace if top_item else None,
                 top_product_niche=top_item.niche if top_item else None,
                 top_opportunity_score=top_item.opportunity_score if top_item else None,
+                items=saved_products,
             )
         )
 

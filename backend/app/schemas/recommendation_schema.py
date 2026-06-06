@@ -34,6 +34,25 @@ class RecommendationResponse(BaseModel):
     message: str = "Ranking gerado com sucesso."
 
 
+class RecommendationHistoryProduct(BaseModel):
+    rank: int
+    product_id: int
+    product_name: str
+    marketplace: str
+    marketplace_label: str
+    niche: str
+    niche_label: str
+    image_url: str | None = None
+    product_url: str | None = None
+    average_price: float
+    opportunity_score: float
+    estimated_margin_percent: float
+    estimated_profit: float
+    conversion_probability: float
+    competition_score: float
+    risk_score: float
+
+
 class RecommendationHistoryItem(BaseModel):
     id: int
     created_at: datetime
@@ -45,6 +64,7 @@ class RecommendationHistoryItem(BaseModel):
     top_product_marketplace: str | None = None
     top_product_niche: str | None = None
     top_opportunity_score: float | None = None
+    items: list[RecommendationHistoryProduct] = Field(default_factory=list)
 
 
 class RecommendationHistoryResponse(BaseModel):

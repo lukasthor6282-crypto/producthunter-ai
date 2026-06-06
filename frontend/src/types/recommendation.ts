@@ -25,6 +25,50 @@ export type RecommendationResponse = {
   message?: string;
 };
 
+export type RecommendationHistoryProduct = {
+  rank: number;
+  product_id: number;
+  product_name: string;
+  marketplace: string;
+  marketplace_label: string;
+  niche: string;
+  niche_label: string;
+  image_url?: string | null;
+  product_url?: string | null;
+  average_price: number;
+  opportunity_score: number;
+  estimated_margin_percent: number;
+  estimated_profit: number;
+  conversion_probability: number;
+  competition_score: number;
+  risk_score: number;
+};
+
+export type RecommendationHistoryItem = {
+  id: number;
+  created_at: string;
+  profile: UserProfile;
+  total_candidates: number;
+  returned_count: number;
+  message: string;
+  top_product_name?: string | null;
+  top_product_marketplace?: string | null;
+  top_product_niche?: string | null;
+  top_opportunity_score?: number | null;
+  items?: RecommendationHistoryProduct[];
+};
+
+export type RecommendationHistoryResponse = {
+  items: RecommendationHistoryItem[];
+};
+
+export type RecommendationUsage = {
+  period_month: string;
+  generated_count: number;
+  monthly_limit: number;
+  remaining: number;
+};
+
 export type ProfitSimulation = {
   product_id?: number;
   unit_revenue: number;
