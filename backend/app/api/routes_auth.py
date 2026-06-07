@@ -1,13 +1,15 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.security import InMemoryRateLimiter
 from app.db import get_db
 from app.dependencies.auth import get_current_session
+from app.schemas.security_schema import SecurityAuditEventsResponse
 from app.schemas.auth_schema import AuthConfig, AuthSessionResponse, GoogleLoginRequest
+from app.services.audit_service import list_user_security_events, safe_record_security_event
 from app.services.auth_service import (
     create_user_session,
     revoke_session,
@@ -68,6 +70,20 @@ def _bearer_token(request: Request) -> str | None:
     return token.strip()
 
 
+def _audit_auth_exception(db: Session, request: Request, exc: HTTPException) -> None:
+    safe_record_security_event(
+        db,
+        "auth.login",
+        "blocked" if exc.status_code == status.HTTP_403_FORBIDDEN else "failure",
+        request=request,
+        details={
+            "provider": "google",
+            "status_code": exc.status_code,
+            "reason": str(exc.detail),
+        },
+    )
+
+
 @router.get("/config", response_model=AuthConfig)
 def auth_config() -> AuthConfig:
     settings = get_settings()
@@ -86,14 +102,27 @@ def login_with_google(
     response: Response,
     db: Session = Depends(get_db),
 ) -> AuthSessionResponse:
-    _validate_origin(request)
-    profile = verify_google_credential(payload.credential)
-    user = upsert_google_user(db, profile)
+    try:
+        _validate_origin(request)
+        profile = verify_google_credential(payload.credential)
+        user = upsert_google_user(db, profile)
+    except HTTPException as exc:
+        _audit_auth_exception(db, request, exc)
+        raise
+
     raw_token, session = create_user_session(
         db,
         user,
         user_agent=request.headers.get("user-agent"),
         ip_address=request.client.host if request.client else None,
+    )
+    safe_record_security_event(
+        db,
+        "auth.login",
+        "success",
+        user=user,
+        request=request,
+        details={"provider": "google", "session_id": session.id},
     )
     _set_session_cookie(response, raw_token, session.expires_at)
     return AuthSessionResponse(user=user, expires_at=session.expires_at, access_token=raw_token)
@@ -104,9 +133,27 @@ def me(session=Depends(get_current_session)) -> AuthSessionResponse:
     return AuthSessionResponse(user=session.user, expires_at=session.expires_at)
 
 
+@router.get("/security-events", response_model=SecurityAuditEventsResponse)
+def security_events(
+    limit: int = Query(default=30, ge=1, le=100),
+    session=Depends(get_current_session),
+    db: Session = Depends(get_db),
+) -> SecurityAuditEventsResponse:
+    return SecurityAuditEventsResponse(items=list_user_security_events(db, session.user, limit=limit))
+
+
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(request: Request, response: Response, db: Session = Depends(get_db)) -> Response:
     settings = get_settings()
-    revoke_session(db, _bearer_token(request) or request.cookies.get(settings.session_cookie_name))
+    revoked_session = revoke_session(db, _bearer_token(request) or request.cookies.get(settings.session_cookie_name))
+    safe_record_security_event(
+        db,
+        "auth.logout",
+        "success" if revoked_session else "missing_session",
+        user_id=revoked_session.user_id if revoked_session else None,
+        request=request,
+        details={"session_id": revoked_session.id} if revoked_session else {},
+    )
     _clear_session_cookie(response)
+    response.status_code = status.HTTP_204_NO_CONTENT
     return response

@@ -11,6 +11,7 @@ from app.db import Base
 from app.models import auth_models  # noqa: F401
 from app.models import billing_models  # noqa: F401
 from app.models import recommendation_models  # noqa: F401
+from app.models import security_models  # noqa: F401
 
 config = context.config
 

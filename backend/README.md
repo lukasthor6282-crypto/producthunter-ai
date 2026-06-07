@@ -140,10 +140,11 @@ Retorna o status da API.
 GET /auth/config
 POST /auth/google
 GET /auth/me
+GET /auth/security-events
 POST /auth/logout
 ```
 
-`/auth/google` recebe a credencial JWT retornada pelo Google Identity Services, valida o token no backend e cria uma sessao com cookie `HttpOnly`. As rotas de recomendacao, lucro, ML e analytics exigem login.
+`/auth/google` recebe a credencial JWT retornada pelo Google Identity Services, valida o token no backend e cria uma sessao com cookie `HttpOnly`. Eventos de login e logout sao registrados em `security_audit_events`, e o usuario autenticado pode consultar os eventos recentes em `/auth/security-events`. As rotas de recomendacao, lucro, ML e analytics exigem login.
 
 ### Produtos
 

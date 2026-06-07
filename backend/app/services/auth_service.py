@@ -182,9 +182,9 @@ def get_valid_session(db: Session, raw_token: str | None) -> UserSession | None:
     return session
 
 
-def revoke_session(db: Session, raw_token: str | None) -> None:
+def revoke_session(db: Session, raw_token: str | None) -> UserSession | None:
     if not raw_token:
-        return
+        return None
 
     session = db.scalar(
         select(UserSession).where(
@@ -193,7 +193,9 @@ def revoke_session(db: Session, raw_token: str | None) -> None:
         )
     )
     if session is None:
-        return
+        return None
 
     session.revoked_at = datetime.now(timezone.utc)
     db.commit()
+    db.refresh(session)
+    return session
