@@ -94,6 +94,13 @@ Para producao com HTTPS, use `SESSION_COOKIE_SECURE=true`. O banco padrao e SQLi
 $env:DATABASE_URL="postgresql+psycopg://usuario:senha@host:5432/producthunter"
 ```
 
+O backend versiona o schema com Alembic e roda as migracoes automaticamente no startup. Para validar manualmente:
+
+```powershell
+cd backend
+python -m alembic upgrade head
+```
+
 #### Coleta real de produtos
 
 Por padrao, o backend usa `PRODUCT_SOURCE=auto`: tenta Mercado Livre quando houver token e, se nao houver, usa um catalogo publico de produtos com fotos. Para ativar busca oficial do Mercado Livre, configure:

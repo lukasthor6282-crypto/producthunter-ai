@@ -52,6 +52,26 @@ $env:SESSION_COOKIE_SECURE="true"
 
 Em producao, mantenha HTTPS ativo, use `SESSION_COOKIE_SECURE=true` e restrinja `CORS_ORIGINS` ao dominio real do SaaS.
 
+## Migracoes do Banco
+
+O backend usa Alembic para versionar o schema do banco. No startup, a API executa `upgrade head` automaticamente. Se o banco ja existir e ainda nao tiver a tabela `alembic_version`, o backend preserva as tabelas atuais e marca o schema como versionado.
+
+Comandos manuais, quando precisar validar antes do deploy:
+
+```powershell
+cd backend
+python -m alembic upgrade head
+python -m alembic current
+```
+
+No Render, mantenha o start command apontando para a API normalmente:
+
+```text
+python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+As migracoes rodam durante o startup da API.
+
 ## Produtos reais com fotos
 
 O provider principal usa `PRODUCT_SOURCE=auto`. Ele tenta a API oficial do Mercado Livre quando `MERCADO_LIVRE_ACCESS_TOKEN` estiver configurado e, se nao conseguir, usa um catalogo publico com imagens para manter a experiencia visual.
@@ -70,13 +90,16 @@ backend/
     api/              Rotas FastAPI
     core/             Configuracao por variaveis de ambiente
     data_providers/   Fontes de dados simuladas e abstracoes futuras
-    db.py             Engine SQLAlchemy e criacao das tabelas
+    db.py             Engine SQLAlchemy e sessao do banco
+    db_migrations.py  Execucao das migracoes no startup
     dependencies/     Dependencias de autenticacao
     ml/               Features, treino, metricas e previsao
     models/           Tabelas de usuarios e sessoes
     schemas/          Schemas Pydantic
     services/         Recomendacao, lucro, score, analytics e explicacoes
     utils/            Constantes e normalizacao
+  migrations/         Versoes Alembic do schema
+  alembic.ini
   requirements.txt
   README.md
 ```

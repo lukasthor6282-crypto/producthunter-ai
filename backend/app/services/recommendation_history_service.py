@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.auth_models import User
 from app.models.billing_models import BillingSubscription
@@ -135,6 +135,7 @@ def save_recommendation_run(
 def list_recommendation_history(db: Session, user: User, limit: int = 20) -> RecommendationHistoryResponse:
     runs = db.scalars(
         select(RecommendationRun)
+        .options(selectinload(RecommendationRun.items))
         .where(RecommendationRun.user_id == user.id)
         .order_by(RecommendationRun.created_at.desc())
         .limit(limit)

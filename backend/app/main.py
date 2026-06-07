@@ -13,7 +13,7 @@ from app.api import (
     routes_recommendations,
 )
 from app.core.config import get_settings
-from app.db import init_db
+from app.db_migrations import run_startup_migrations
 from app.utils.constants import (
     EXPERIENCE_LEVELS,
     GOALS,
@@ -43,7 +43,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup() -> None:
-    init_db()
+    run_startup_migrations()
 
 
 @app.exception_handler(RequestValidationError)
