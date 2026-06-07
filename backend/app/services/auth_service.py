@@ -108,10 +108,7 @@ def create_user_session(
     now = utcnow()
     expires_at = now + timedelta(days=settings.session_expire_days)
 
-    db.query(UserSession).filter(
-        UserSession.user_id == user.id,
-        UserSession.expires_at < now,
-    ).delete(synchronize_session=False)
+    cleanup_user_sessions(db, user.id, now)
 
     raw_token = token_urlsafe(48)
     session = UserSession(
@@ -122,9 +119,46 @@ def create_user_session(
         expires_at=expires_at,
     )
     db.add(session)
+    db.flush()
+    enforce_active_session_limit(db, user.id, now)
     db.commit()
     db.refresh(session)
     return raw_token, session
+
+
+def cleanup_user_sessions(db: Session, user_id: int, now: datetime | None = None) -> None:
+    settings = get_settings()
+    now = now or utcnow()
+    revoked_before = now - timedelta(days=max(0, settings.session_revoked_retention_days))
+
+    db.query(UserSession).filter(
+        UserSession.user_id == user_id,
+        UserSession.expires_at < now,
+    ).delete(synchronize_session=False)
+
+    db.query(UserSession).filter(
+        UserSession.user_id == user_id,
+        UserSession.revoked_at.is_not(None),
+        UserSession.revoked_at < revoked_before,
+    ).delete(synchronize_session=False)
+
+
+def enforce_active_session_limit(db: Session, user_id: int, now: datetime | None = None) -> None:
+    settings = get_settings()
+    now = now or utcnow()
+    max_active_sessions = max(1, settings.session_max_active_per_user)
+    active_sessions = db.scalars(
+        select(UserSession)
+        .where(
+            UserSession.user_id == user_id,
+            UserSession.revoked_at.is_(None),
+            UserSession.expires_at > now,
+        )
+        .order_by(UserSession.created_at.desc(), UserSession.id.desc())
+    ).all()
+
+    for old_session in active_sessions[max_active_sessions:]:
+        old_session.revoked_at = now
 
 
 def get_valid_session(db: Session, raw_token: str | None) -> UserSession | None:

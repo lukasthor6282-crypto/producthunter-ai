@@ -58,6 +58,8 @@ A API adiciona headers de seguranca em todas as respostas, bloqueia payloads gra
 
 Rotas autenticadas por cookie tambem validam `Origin`/`Referer` em metodos de escrita (`POST`, `PUT`, `PATCH`, `DELETE`). Isso reduz risco de CSRF quando a sessao `HttpOnly` e enviada automaticamente pelo navegador. As origens aceitas sao as mesmas configuradas em `CORS_ORIGINS`.
 
+No login, o backend tambem limita sessoes ativas por usuario e limpa sessoes expiradas ou revogadas antigas.
+
 Variaveis ajustaveis:
 
 ```powershell
@@ -66,6 +68,8 @@ $env:AUTH_RATE_LIMIT_COUNT="12"
 $env:AUTH_RATE_LIMIT_WINDOW_SECONDS="60"
 $env:RECOMMENDATION_RATE_LIMIT_COUNT="30"
 $env:RECOMMENDATION_RATE_LIMIT_WINDOW_SECONDS="60"
+$env:SESSION_MAX_ACTIVE_PER_USER="5"
+$env:SESSION_REVOKED_RETENTION_DAYS="30"
 ```
 
 ## Migracoes do Banco

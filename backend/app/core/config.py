@@ -47,6 +47,8 @@ class Settings(BaseModel):
     session_cookie_secure: bool = False
     session_cookie_samesite: str = "lax"
     session_expire_days: int = 30
+    session_max_active_per_user: int = 5
+    session_revoked_retention_days: int = 30
     max_request_body_bytes: int = 1_048_576
     auth_rate_limit_count: int = 12
     auth_rate_limit_window_seconds: int = 60
@@ -104,6 +106,8 @@ def get_settings() -> Settings:
         session_cookie_secure=session_cookie_secure,
         session_cookie_samesite=session_cookie_samesite,
         session_expire_days=int(getenv("SESSION_EXPIRE_DAYS", "30")),
+        session_max_active_per_user=_env_int("SESSION_MAX_ACTIVE_PER_USER", 5),
+        session_revoked_retention_days=_env_int("SESSION_REVOKED_RETENTION_DAYS", 30),
         max_request_body_bytes=_env_int("MAX_REQUEST_BODY_BYTES", 1_048_576),
         auth_rate_limit_count=_env_int("AUTH_RATE_LIMIT_COUNT", 12),
         auth_rate_limit_window_seconds=_env_int("AUTH_RATE_LIMIT_WINDOW_SECONDS", 60),
