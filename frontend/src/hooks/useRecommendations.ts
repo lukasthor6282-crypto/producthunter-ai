@@ -1,10 +1,15 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { generateRecommendations } from "../services/recommendationApi";
 import type { UserProfile } from "../types/userProfile";
 
 export function useRecommendations() {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (profile: UserProfile) => generateRecommendations(profile),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["recommendations", "usage"] });
+      void queryClient.invalidateQueries({ queryKey: ["recommendations", "history"] });
+    },
   });
 
   return {

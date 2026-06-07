@@ -16,19 +16,40 @@ except ImportError:  # pragma: no cover - only happens before dependencies are i
 
 STRIPE_API_VERSION = "2026-02-25.clover"
 
+ACTIVE_SUBSCRIPTION_STATUSES = {"active", "trialing"}
+
 PLAN_CATALOG: dict[str, dict[str, Any]] = {
+    "free": {
+        "name": "Free",
+        "description": "Para testar o ProductHunter com poucas analises mensais.",
+        "price_cents": 0,
+        "monthly_recommendations": 10,
+        "max_results_per_analysis": 8,
+        "history_retention_days": 30,
+        "seats": 1,
+        "badge": "Teste inicial",
+        "features": [
+            "10 analises de produtos por mes",
+            "Ate 8 produtos por analise",
+            "Historico por 30 dias",
+            "Score de oportunidade essencial",
+        ],
+    },
     "starter": {
         "name": "Starter",
         "description": "Para validar nichos e rodar as primeiras apostas com IA.",
         "price_cents": 2900,
         "monthly_recommendations": 80,
+        "max_results_per_analysis": 12,
+        "history_retention_days": 90,
         "seats": 1,
         "badge": "Comeco inteligente",
         "features": [
             "80 analises de produtos por mes",
+            "Ate 12 produtos por analise",
             "Ranking com score de oportunidade",
             "Simulador de lucro basico",
-            "Historico de recomendacoes",
+            "Historico de recomendacoes por 90 dias",
         ],
     },
     "pro": {
@@ -36,11 +57,14 @@ PLAN_CATALOG: dict[str, dict[str, Any]] = {
         "description": "Plano principal para afiliados e vendedores que analisam produtos toda semana.",
         "price_cents": 7900,
         "monthly_recommendations": 350,
+        "max_results_per_analysis": 20,
+        "history_retention_days": 365,
         "seats": 1,
         "highlight": True,
         "badge": "Mais recomendado",
         "features": [
             "350 analises de produtos por mes",
+            "Ate 20 produtos por analise",
             "Filtros avancados por nicho, risco e margem",
             "Laboratorio de IA e explicacao detalhada",
             "Comparativos e simulacoes completas",
@@ -52,10 +76,13 @@ PLAN_CATALOG: dict[str, dict[str, Any]] = {
         "description": "Para operacoes com mais volume, equipe pequena ou varias lojas.",
         "price_cents": 14900,
         "monthly_recommendations": 1200,
+        "max_results_per_analysis": 30,
+        "history_retention_days": 730,
         "seats": 3,
         "badge": "Operacao em escala",
         "features": [
             "1.200 analises de produtos por mes",
+            "Ate 30 produtos por analise",
             "3 usuarios na mesma operacao",
             "Alertas de oportunidade e risco",
             "Suporte prioritario",
@@ -66,6 +93,9 @@ PLAN_CATALOG: dict[str, dict[str, Any]] = {
 
 
 def _stripe_price_id(plan_slug: str) -> str | None:
+    if plan_slug == "free":
+        return None
+
     settings = get_settings()
     return {
         "starter": settings.stripe_price_starter,
@@ -80,8 +110,10 @@ def list_plans() -> list[dict[str, Any]]:
             "slug": slug,
             "currency": "BRL",
             "interval": "month",
+            "is_paid": slug != "free",
             "highlight": bool(plan.get("highlight")),
-            "stripe_configured": bool(_stripe_price_id(slug)),
+            "checkout_enabled": slug != "free" and bool(_stripe_price_id(slug)),
+            "stripe_configured": slug == "free" or bool(_stripe_price_id(slug)),
             **plan,
         }
         for slug, plan in PLAN_CATALOG.items()
@@ -99,28 +131,56 @@ def get_subscription(db: Session, user: User) -> BillingSubscription | None:
     return db.query(BillingSubscription).filter(BillingSubscription.user_id == user.id).one_or_none()
 
 
+def active_plan_slug(db: Session, user: User) -> str:
+    subscription = get_subscription(db, user)
+    if subscription and subscription.status in ACTIVE_SUBSCRIPTION_STATUSES and subscription.plan_slug in PLAN_CATALOG:
+        return subscription.plan_slug
+    return "free"
+
+
+def plan_limits(plan_slug: str) -> dict[str, Any]:
+    plan = PLAN_CATALOG.get(plan_slug) or PLAN_CATALOG["free"]
+    return {
+        "plan_slug": plan_slug if plan_slug in PLAN_CATALOG else "free",
+        "plan_name": plan["name"],
+        "monthly_recommendations": int(plan["monthly_recommendations"]),
+        "max_results_per_analysis": int(plan["max_results_per_analysis"]),
+        "history_retention_days": int(plan["history_retention_days"]),
+    }
+
+
 def subscription_status(db: Session, user: User) -> dict[str, Any]:
     subscription = get_subscription(db, user)
     if subscription is None:
+        limits = plan_limits("free")
         return {
             "plan_slug": "free",
+            "plan_name": limits["plan_name"],
             "status": "free",
             "is_active": False,
             "cancel_at_period_end": False,
             "current_period_end": None,
             "stripe_customer_id": None,
             "portal_enabled": False,
+            "monthly_recommendations": limits["monthly_recommendations"],
+            "max_results_per_analysis": limits["max_results_per_analysis"],
+            "history_retention_days": limits["history_retention_days"],
         }
 
-    active_statuses = {"active", "trialing"}
+    current_plan = subscription.plan_slug if subscription.status in ACTIVE_SUBSCRIPTION_STATUSES else "free"
+    limits = plan_limits(current_plan)
     return {
-        "plan_slug": subscription.plan_slug,
+        "plan_slug": limits["plan_slug"],
+        "plan_name": limits["plan_name"],
         "status": subscription.status,
-        "is_active": subscription.status in active_statuses,
+        "is_active": subscription.status in ACTIVE_SUBSCRIPTION_STATUSES,
         "cancel_at_period_end": subscription.cancel_at_period_end,
         "current_period_end": subscription.current_period_end,
         "stripe_customer_id": subscription.stripe_customer_id,
         "portal_enabled": bool(subscription.stripe_customer_id and get_settings().stripe_secret_key),
+        "monthly_recommendations": limits["monthly_recommendations"],
+        "max_results_per_analysis": limits["max_results_per_analysis"],
+        "history_retention_days": limits["history_retention_days"],
     }
 
 
@@ -155,6 +215,9 @@ def _timestamp_to_datetime(value: int | None) -> datetime | None:
 
 def create_checkout_session(db: Session, user: User, plan_slug: str) -> str:
     plan = get_plan(plan_slug)
+    if plan_slug == "free":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="O plano Free nao precisa de checkout.")
+
     price_id = _stripe_price_id(plan_slug)
     if not price_id:
         raise HTTPException(
@@ -204,6 +267,8 @@ def create_portal_session(db: Session, user: User) -> str:
 
 def _plan_slug_from_price(price_id: str | None) -> str:
     for slug in PLAN_CATALOG:
+        if slug == "free":
+            continue
         if _stripe_price_id(slug) == price_id:
             return slug
     return "free"

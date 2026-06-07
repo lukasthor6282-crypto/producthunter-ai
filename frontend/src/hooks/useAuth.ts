@@ -25,6 +25,7 @@ export function useAuth() {
     queryClient.removeQueries({ queryKey: ["billing", "subscription"] });
     queryClient.removeQueries({ queryKey: ["ml"] });
     queryClient.removeQueries({ queryKey: ["profit"] });
+    queryClient.removeQueries({ queryKey: ["recommendations"] });
   }, [queryClient]);
 
   const configQuery = useQuery({

@@ -13,6 +13,7 @@ from app.schemas.recommendation_schema import (
     RecommendationUsageResponse,
 )
 from app.services.recommendation_history_service import (
+    ensure_recommendation_quota,
     list_recommendation_history,
     recommendation_usage_status,
     save_recommendation_run,
@@ -39,9 +40,12 @@ def generate(
     db: Session = Depends(get_db),
 ) -> RecommendationResponse:
     try:
+        ensure_recommendation_quota(db, user, request.limit)
         response = generate_recommendations(request)
         save_recommendation_run(db, user, request, response)
         return response
+    except HTTPException:
+        raise
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:

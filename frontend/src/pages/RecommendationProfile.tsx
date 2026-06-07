@@ -1,14 +1,20 @@
-import { Clock, DatabaseZap } from "lucide-react";
+import { AlertTriangle, Clock, DatabaseZap, Sparkles, WalletCards } from "lucide-react";
 
 import { RecommendationForm } from "../components/recommendation/RecommendationForm";
+import { useRecommendationUsage } from "../hooks/useRecommendationUsage";
 import type { UserProfile } from "../types/userProfile";
 
 type RecommendationProfileProps = {
   onGenerate: (profile: UserProfile) => Promise<void>;
   isLoading: boolean;
+  onOpenPlans: () => void;
 };
 
-export function RecommendationProfile({ onGenerate, isLoading }: RecommendationProfileProps) {
+export function RecommendationProfile({ onGenerate, isLoading, onOpenPlans }: RecommendationProfileProps) {
+  const { usage, isLoading: isUsageLoading, error: usageError } = useRecommendationUsage();
+  const usagePercent = usage ? Math.min(100, usage.usage_percent) : 0;
+  const limitReached = Boolean(usage?.limit_reached);
+
   return (
     <div className="min-h-screen py-6 md:py-10">
       <div className="mb-7 flex flex-col justify-between gap-5 md:mb-10 xl:flex-row xl:items-start">
@@ -31,7 +37,62 @@ export function RecommendationProfile({ onGenerate, isLoading }: RecommendationP
         </div>
       </div>
 
-      <RecommendationForm onSubmit={onGenerate} isLoading={isLoading} />
+      <section className={limitReached ? "kombai-card mb-5 border-ember/30 bg-ember/10 p-5" : "kombai-card kombai-card-green mb-5 p-5"}>
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-4">
+            <span className={limitReached ? "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-amber-300/25 bg-amber-300/10 text-amber-200" : "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-emerald-300/25 bg-emerald-300/10 text-emerald-200"}>
+              {limitReached ? <AlertTriangle size={20} /> : <WalletCards size={20} />}
+            </span>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-black text-white">Uso do plano</h2>
+                <span className={limitReached ? "kombai-chip kombai-chip-orange" : "kombai-chip kombai-chip-green"}>
+                  {usage?.plan_name ?? "Carregando"}
+                </span>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                {usage
+                  ? `${usage.generated_count} de ${usage.monthly_limit} analises usadas em ${usage.period_month}. Restam ${usage.remaining}.`
+                  : isUsageLoading
+                    ? "Buscando seus limites mensais..."
+                    : usageError ?? "Nao foi possivel carregar o uso agora."}
+              </p>
+            </div>
+          </div>
+
+          <div className="min-w-full lg:min-w-[260px]">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="font-mono text-3xl font-black text-white">{usage?.remaining ?? "--"}</p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">analises restantes</p>
+              </div>
+              <button type="button" className={limitReached ? "kombai-btn kombai-btn-solid" : "kombai-btn"} onClick={onOpenPlans}>
+                <Sparkles size={16} />
+                {limitReached ? "Fazer upgrade" : "Ver planos"}
+              </button>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+              <div
+                className={limitReached ? "h-full rounded-full bg-amber-300 transition-[width] duration-500" : "h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300 transition-[width] duration-500"}
+                style={{ width: `${usagePercent}%` }}
+              />
+            </div>
+            {usage && (
+              <p className="mt-2 text-right text-xs font-semibold text-slate-500">
+                Ate {usage.max_results_per_analysis} produtos por analise.
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <RecommendationForm
+        onSubmit={onGenerate}
+        isLoading={isLoading}
+        disabled={limitReached}
+        usage={usage}
+        onUpgrade={onOpenPlans}
+      />
     </div>
   );
 }

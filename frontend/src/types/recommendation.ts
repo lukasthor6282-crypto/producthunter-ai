@@ -64,9 +64,15 @@ export type RecommendationHistoryResponse = {
 
 export type RecommendationUsage = {
   period_month: string;
+  plan_slug: string;
+  plan_name: string;
   generated_count: number;
   monthly_limit: number;
   remaining: number;
+  max_results_per_analysis: number;
+  usage_percent: number;
+  limit_reached: boolean;
+  upgrade_recommended: boolean;
 };
 
 export type ProfitSimulation = {

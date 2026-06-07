@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.auth_models import User
-from app.models.billing_models import BillingSubscription
 from app.models.recommendation_models import RecommendationRun, RecommendationRunItem, RecommendationUsage
 from app.schemas.profile_schema import UserProfile
 from app.schemas.recommendation_schema import (
@@ -17,10 +17,7 @@ from app.schemas.recommendation_schema import (
     RecommendationResponse,
     RecommendationUsageResponse,
 )
-from app.services.billing_service import PLAN_CATALOG
-
-
-FREE_MONTHLY_RECOMMENDATIONS = 10
+from app.services.billing_service import active_plan_slug, plan_limits
 
 
 def current_period_month(now: datetime | None = None) -> str:
@@ -29,10 +26,12 @@ def current_period_month(now: datetime | None = None) -> str:
 
 
 def monthly_recommendation_limit(db: Session, user: User) -> int:
-    subscription = db.scalar(select(BillingSubscription).where(BillingSubscription.user_id == user.id))
-    if subscription and subscription.status in {"active", "trialing"}:
-        return int(PLAN_CATALOG.get(subscription.plan_slug, {}).get("monthly_recommendations", FREE_MONTHLY_RECOMMENDATIONS))
-    return FREE_MONTHLY_RECOMMENDATIONS
+    limits = plan_limits(active_plan_slug(db, user))
+    return int(limits["monthly_recommendations"])
+
+
+def recommendation_plan_limits(db: Session, user: User) -> dict:
+    return plan_limits(active_plan_slug(db, user))
 
 
 def get_or_create_usage(db: Session, user: User, period_month: str | None = None) -> RecommendationUsage:
@@ -61,13 +60,58 @@ def increment_recommendation_usage(db: Session, user: User) -> RecommendationUsa
 
 def recommendation_usage_status(db: Session, user: User) -> RecommendationUsageResponse:
     usage = get_or_create_usage(db, user)
-    monthly_limit = monthly_recommendation_limit(db, user)
+    limits = recommendation_plan_limits(db, user)
+    monthly_limit = int(limits["monthly_recommendations"])
+    remaining = max(0, monthly_limit - usage.generated_count)
+    usage_percent = round(min(100, (usage.generated_count / monthly_limit) * 100), 2) if monthly_limit else 100.0
     return RecommendationUsageResponse(
         period_month=usage.period_month,
+        plan_slug=str(limits["plan_slug"]),
+        plan_name=str(limits["plan_name"]),
         generated_count=usage.generated_count,
         monthly_limit=monthly_limit,
-        remaining=max(0, monthly_limit - usage.generated_count),
+        remaining=remaining,
+        max_results_per_analysis=int(limits["max_results_per_analysis"]),
+        usage_percent=usage_percent,
+        limit_reached=remaining <= 0,
+        upgrade_recommended=remaining <= max(1, int(monthly_limit * 0.1)),
     )
+
+
+def ensure_recommendation_quota(db: Session, user: User, requested_limit: int) -> None:
+    usage = recommendation_usage_status(db, user)
+    if requested_limit > usage.max_results_per_analysis:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail={
+                "code": "PLAN_RESULT_LIMIT_EXCEEDED",
+                "message": (
+                    f"Seu plano {usage.plan_name} permite ate {usage.max_results_per_analysis} produtos por analise. "
+                    "Reduza a quantidade ou faca upgrade."
+                ),
+                "plan_slug": usage.plan_slug,
+                "plan_name": usage.plan_name,
+                "max_results_per_analysis": usage.max_results_per_analysis,
+            },
+        )
+
+    if usage.remaining <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={
+                "code": "PLAN_MONTHLY_LIMIT_REACHED",
+                "message": (
+                    f"Voce atingiu o limite mensal do plano {usage.plan_name}: "
+                    f"{usage.generated_count} de {usage.monthly_limit} analises usadas neste periodo."
+                ),
+                "plan_slug": usage.plan_slug,
+                "plan_name": usage.plan_name,
+                "period_month": usage.period_month,
+                "generated_count": usage.generated_count,
+                "monthly_limit": usage.monthly_limit,
+                "remaining": usage.remaining,
+            },
+        )
 
 
 def save_recommendation_run(

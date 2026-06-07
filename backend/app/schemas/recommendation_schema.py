@@ -73,6 +73,12 @@ class RecommendationHistoryResponse(BaseModel):
 
 class RecommendationUsageResponse(BaseModel):
     period_month: str
+    plan_slug: str
+    plan_name: str
     generated_count: int
     monthly_limit: int
     remaining: int
+    max_results_per_analysis: int
+    usage_percent: float
+    limit_reached: bool
+    upgrade_recommended: bool

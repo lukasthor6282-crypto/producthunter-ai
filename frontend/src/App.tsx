@@ -198,7 +198,7 @@ export default function App() {
       ),
       dashboard: <Dashboard />,
       account: <AccountPage user={user} onLogout={handleLogout} isLoggingOut={isLoggingOut} />,
-      profile: <RecommendationProfile onGenerate={generate} isLoading={isRecommendationLoading} />,
+      profile: <RecommendationProfile onGenerate={generate} isLoading={isRecommendationLoading} onOpenPlans={() => navigate("billing")} />,
       results: <RecommendationResults data={data} selectedItem={selectedItem} onSelect={setSelectedItem} onNavigate={navigate} />,
       history: <RecommendationHistoryPage onNavigate={navigate} />,
       product: <ProductDetail item={selectedItem} />,

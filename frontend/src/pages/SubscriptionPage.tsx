@@ -1,11 +1,13 @@
-import { Check, CreditCard, Crown, ExternalLink, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { Activity, Check, CreditCard, Crown, ExternalLink, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import type { ComponentType } from "react";
 
 import { useBilling } from "../hooks/useBilling";
+import { useRecommendationUsage } from "../hooks/useRecommendationUsage";
 import { brl } from "../services/format";
 import type { BillingPlan } from "../types/billing";
 
 const planIcons: Record<BillingPlan["slug"], ComponentType<{ size?: number; className?: string }>> = {
+  free: Sparkles,
   starter: Sparkles,
   pro: Crown,
   scale: Zap,
@@ -22,8 +24,10 @@ export function SubscriptionPage() {
     openPortal,
     error,
   } = useBilling();
+  const { usage, isLoading: isUsageLoading } = useRecommendationUsage();
 
   const currentPlan = subscription?.is_active ? subscription.plan_slug : "free";
+  const usagePercent = usage ? Math.min(100, usage.usage_percent) : 0;
 
   return (
     <div className="min-h-screen py-6 md:py-10">
@@ -61,15 +65,52 @@ export function SubscriptionPage() {
         </div>
       </header>
 
+      <section className="kombai-card kombai-card-green mb-6 p-5">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-emerald-300/25 bg-emerald-300/10 text-emerald-200">
+              <Activity size={20} />
+            </span>
+            <div>
+              <h2 className="font-black text-white">Consumo do mes</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-400">
+                {usage
+                  ? `${usage.generated_count} de ${usage.monthly_limit} analises usadas no plano ${usage.plan_name}.`
+                  : isUsageLoading
+                    ? "Buscando consumo do plano..."
+                    : "Nao foi possivel carregar o consumo agora."}
+              </p>
+            </div>
+          </div>
+          <div className="min-w-full lg:min-w-[300px]">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="font-mono text-3xl font-black text-white">{usage?.remaining ?? "--"}</p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">restantes</p>
+              </div>
+              <span className={usage?.limit_reached ? "kombai-chip kombai-chip-orange" : "kombai-chip kombai-chip-green"}>
+                {usage?.limit_reached ? "Limite atingido" : "Uso normal"}
+              </span>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+              <div
+                className={usage?.limit_reached ? "h-full rounded-full bg-amber-300 transition-[width] duration-500" : "h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300 transition-[width] duration-500"}
+                style={{ width: `${usagePercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {error && (
         <div className="mb-5 rounded-lg border border-ember/30 bg-ember/10 p-4 text-sm font-semibold text-ember">
           {friendlyError(error)}
         </div>
       )}
 
-      <section className="mb-6 grid gap-4 lg:grid-cols-3">
+      <section className="mb-6 grid gap-4 xl:grid-cols-4">
         {isLoading ? (
-          Array.from({ length: 3 }).map((_, index) => (
+          Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="kombai-card p-6">
               <div className="shimmer h-10 rounded-lg bg-white/[0.06]" />
               <div className="shimmer mt-5 h-32 rounded-lg bg-white/[0.05]" />
@@ -122,7 +163,7 @@ export function SubscriptionPage() {
 function PlanCard({ plan, current, loading, onChoose }: { plan: BillingPlan; current: boolean; loading: boolean; onChoose: () => void }) {
   const Icon = planIcons[plan.slug];
   const price = brl.format(plan.price_cents / 100);
-  const disabled = current || !plan.stripe_configured || loading;
+  const disabled = current || !plan.checkout_enabled || loading;
 
   return (
     <article className={plan.highlight ? "kombai-card kombai-card-green p-5 ring-1 ring-emerald-300/25" : "kombai-card p-5"}>
@@ -143,7 +184,9 @@ function PlanCard({ plan, current, loading, onChoose }: { plan: BillingPlan; cur
 
       <div className="mt-6 grid grid-cols-2 gap-3">
         <Metric label="Análises" value={plan.monthly_recommendations.toLocaleString("pt-BR")} />
-        <Metric label="Usuários" value={String(plan.seats)} />
+        <Metric label="Produtos" value={String(plan.max_results_per_analysis)} />
+        <Metric label="Historico" value={`${plan.history_retention_days}d`} />
+        <Metric label="Usuarios" value={String(plan.seats)} />
       </div>
 
       <ul className="mt-6 space-y-3">
@@ -162,7 +205,15 @@ function PlanCard({ plan, current, loading, onChoose }: { plan: BillingPlan; cur
         onClick={onChoose}
       >
         <CreditCard size={16} />
-        {current ? "Plano atual" : !plan.stripe_configured ? "Configurar Stripe" : loading ? "Abrindo..." : "Assinar"}
+        {current
+          ? "Plano atual"
+          : !plan.is_paid
+            ? "Plano gratuito"
+            : !plan.checkout_enabled
+              ? "Configurar Stripe"
+              : loading
+                ? "Abrindo..."
+                : "Assinar"}
       </button>
     </article>
   );

@@ -21,6 +21,7 @@ import {
 import { motion } from "framer-motion";
 
 import { AIAnalysisLoader } from "../ml/AIAnalysisLoader";
+import type { RecommendationUsage } from "../../types/recommendation";
 import type { UserProfile } from "../../types/userProfile";
 import { defaultProfile, profileOptions } from "../../types/userProfile";
 import { cn } from "../../lib/utils";
@@ -38,6 +39,9 @@ const profileSchema = z.object({
 type RecommendationFormProps = {
   onSubmit: (profile: UserProfile) => Promise<void> | void;
   isLoading?: boolean;
+  disabled?: boolean;
+  usage?: RecommendationUsage | null;
+  onUpgrade?: () => void;
 };
 
 const operationIcons: Record<string, ReactNode> = {
@@ -117,7 +121,7 @@ const formDefaultProfile: UserProfile = {
   experience_level: "intermediate",
 };
 
-export function RecommendationForm({ onSubmit, isLoading = false }: RecommendationFormProps) {
+export function RecommendationForm({ onSubmit, isLoading = false, disabled = false, usage, onUpgrade }: RecommendationFormProps) {
   const {
     register,
     handleSubmit,
@@ -136,7 +140,15 @@ export function RecommendationForm({ onSubmit, isLoading = false }: Recommendati
   };
 
   return (
-    <form className="kombai-card overflow-hidden" onSubmit={handleSubmit((values) => void onSubmit(values))}>
+    <form
+      className="kombai-card overflow-hidden"
+      onSubmit={handleSubmit((values) => {
+        if (disabled) {
+          return;
+        }
+        void onSubmit(values);
+      })}
+    >
       {(Object.keys(formDefaultProfile) as Array<keyof UserProfile>).map((field) => (
         <input key={field} type="hidden" {...register(field)} />
       ))}
@@ -275,12 +287,28 @@ export function RecommendationForm({ onSubmit, isLoading = false }: Recommendati
           {isLoading ? (
             <AIAnalysisLoader />
           ) : (
-            <button type="submit" className="kombai-btn kombai-btn-solid min-h-14 w-full text-base">
+            <button type="submit" className="kombai-btn kombai-btn-solid min-h-14 w-full text-base" disabled={disabled}>
               <Sparkles size={18} />
-              Encontrar Produtos
+              {disabled ? "Limite mensal atingido" : "Encontrar Produtos"}
             </button>
           )}
         </motion.div>
+
+        {usage && (
+          <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4 text-sm font-semibold text-slate-400">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                Plano {usage.plan_name}: {usage.generated_count} de {usage.monthly_limit} analises usadas. Ate{" "}
+                {usage.max_results_per_analysis} produtos por analise.
+              </span>
+              {disabled && onUpgrade && (
+                <button type="button" className="kombai-btn min-h-10 shrink-0" onClick={onUpgrade}>
+                  Ver planos
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <p className="text-center text-xs font-semibold text-slate-600">
           Dados usados apenas para gerar recomendações. Nunca compartilhados.

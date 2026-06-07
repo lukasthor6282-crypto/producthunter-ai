@@ -68,6 +68,7 @@ const accountTabs: Array<{ key: AccountTab; label: string; icon: ComponentType<{
 ];
 
 const planIcons: Record<BillingPlan["slug"], ComponentType<{ size?: number; className?: string }>> = {
+  free: Sparkles,
   starter: Sparkles,
   pro: Crown,
   scale: Zap,
@@ -114,7 +115,8 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
 
   const currentPlan = subscription?.is_active ? subscription.plan_slug : "free";
   const currentPlanDetails = plans.find((plan) => plan.slug === currentPlan);
-  const planLimit = currentPlanDetails?.monthly_recommendations ?? 10;
+  const planLimit = subscription?.monthly_recommendations ?? currentPlanDetails?.monthly_recommendations ?? 10;
+  const planProducts = subscription?.max_results_per_analysis ?? currentPlanDetails?.max_results_per_analysis ?? 8;
   const planSeats = currentPlanDetails?.seats ?? 1;
 
   const accountHealth = useMemo(() => {
@@ -177,9 +179,10 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
         </div>
       </header>
 
-      <section className="mb-5 grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
+      <section className="mb-5 grid gap-4 lg:grid-cols-4">
         <AccountMetric icon={<CreditCard size={19} />} label="Plano atual" value={planName(currentPlan)} detail={subscription?.is_active ? friendlyStatus(subscription.status) : "Conta gratuita"} tone="cyan" />
         <AccountMetric icon={<Sparkles size={19} />} label="Analises mensais" value={planLimit.toLocaleString("pt-BR")} detail="limite do plano" tone="green" />
+        <AccountMetric icon={<Database size={19} />} label="Produtos/analise" value={String(planProducts)} detail="por consulta" tone="cyan" />
         <AccountMetric icon={<BadgeCheck size={19} />} label="Usuarios" value={String(planSeats)} detail="assentos incluidos" tone="orange" />
       </section>
 
@@ -666,9 +669,9 @@ function PlansTab({
         </div>
       )}
 
-      <section className="grid gap-4 lg:grid-cols-3">
+      <section className="grid gap-4 xl:grid-cols-4">
         {isLoading
-          ? Array.from({ length: 3 }).map((_, index) => (
+          ? Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="kombai-card p-5">
                 <div className="shimmer h-12 rounded-lg bg-white/[0.06]" />
                 <div className="shimmer mt-5 h-32 rounded-lg bg-white/[0.05]" />
@@ -690,7 +693,7 @@ function PlansTab({
 
 function AccountPlanCard({ plan, current, loading, onChoose }: { plan: BillingPlan; current: boolean; loading: boolean; onChoose: () => void }) {
   const Icon = planIcons[plan.slug];
-  const disabled = current || !plan.stripe_configured || loading;
+  const disabled = current || !plan.checkout_enabled || loading;
 
   return (
     <article className={plan.highlight ? "kombai-card kombai-card-green p-5 ring-1 ring-emerald-300/25" : "kombai-card p-5"}>
@@ -708,6 +711,8 @@ function AccountPlanCard({ plan, current, loading, onChoose }: { plan: BillingPl
       </div>
       <div className="mt-5 grid grid-cols-2 gap-3">
         <InfoTile label="Analises" value={plan.monthly_recommendations.toLocaleString("pt-BR")} />
+        <InfoTile label="Produtos" value={String(plan.max_results_per_analysis)} />
+        <InfoTile label="Historico" value={`${plan.history_retention_days}d`} />
         <InfoTile label="Usuarios" value={String(plan.seats)} />
       </div>
       <ul className="mt-5 space-y-3">
@@ -725,7 +730,15 @@ function AccountPlanCard({ plan, current, loading, onChoose }: { plan: BillingPl
         onClick={onChoose}
       >
         <CreditCard size={16} />
-        {current ? "Plano atual" : !plan.stripe_configured ? "Checkout indisponivel" : loading ? "Abrindo..." : "Assinar"}
+        {current
+          ? "Plano atual"
+          : !plan.is_paid
+            ? "Plano gratuito"
+            : !plan.checkout_enabled
+              ? "Checkout indisponivel"
+              : loading
+                ? "Abrindo..."
+                : "Assinar"}
       </button>
     </article>
   );

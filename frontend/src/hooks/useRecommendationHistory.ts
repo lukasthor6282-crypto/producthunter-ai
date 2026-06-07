@@ -22,6 +22,9 @@ export function useRecommendationHistory(limit = 20) {
     isLoading: historyQuery.isLoading || usageQuery.isLoading,
     isFetching: historyQuery.isFetching || usageQuery.isFetching,
     error: historyError ?? usageError,
-    refetch: historyQuery.refetch,
+    refetch: () => {
+      void historyQuery.refetch();
+      void usageQuery.refetch();
+    },
   };
 }
