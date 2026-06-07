@@ -13,6 +13,7 @@ from app.api import (
     routes_recommendations,
 )
 from app.core.config import get_settings
+from app.core.security import request_size_limit_middleware, security_headers_middleware
 from app.db_migrations import run_startup_migrations
 from app.utils.constants import (
     EXPERIENCE_LEVELS,
@@ -39,6 +40,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.middleware("http")(request_size_limit_middleware)
+app.middleware("http")(security_headers_middleware)
 
 
 @app.on_event("startup")

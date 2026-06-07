@@ -13,6 +13,16 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _env_int(name: str, default: int) -> int:
+    value = getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
 def _normalize_database_url(url: str) -> str:
     if url.startswith("postgres://"):
         return url.replace("postgres://", "postgresql+psycopg://", 1)
@@ -37,6 +47,11 @@ class Settings(BaseModel):
     session_cookie_secure: bool = False
     session_cookie_samesite: str = "lax"
     session_expire_days: int = 30
+    max_request_body_bytes: int = 1_048_576
+    auth_rate_limit_count: int = 12
+    auth_rate_limit_window_seconds: int = 60
+    recommendation_rate_limit_count: int = 30
+    recommendation_rate_limit_window_seconds: int = 60
     cors_origins: list[str]
 
     @property
@@ -89,5 +104,10 @@ def get_settings() -> Settings:
         session_cookie_secure=session_cookie_secure,
         session_cookie_samesite=session_cookie_samesite,
         session_expire_days=int(getenv("SESSION_EXPIRE_DAYS", "30")),
+        max_request_body_bytes=_env_int("MAX_REQUEST_BODY_BYTES", 1_048_576),
+        auth_rate_limit_count=_env_int("AUTH_RATE_LIMIT_COUNT", 12),
+        auth_rate_limit_window_seconds=_env_int("AUTH_RATE_LIMIT_WINDOW_SECONDS", 60),
+        recommendation_rate_limit_count=_env_int("RECOMMENDATION_RATE_LIMIT_COUNT", 30),
+        recommendation_rate_limit_window_seconds=_env_int("RECOMMENDATION_RATE_LIMIT_WINDOW_SECONDS", 60),
         cors_origins=cors_origins,
     )

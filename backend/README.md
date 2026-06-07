@@ -52,6 +52,20 @@ $env:SESSION_COOKIE_SECURE="true"
 
 Em producao, mantenha HTTPS ativo, use `SESSION_COOKIE_SECURE=true` e restrinja `CORS_ORIGINS` ao dominio real do SaaS.
 
+## Seguranca Operacional
+
+A API adiciona headers de seguranca em todas as respostas, bloqueia payloads grandes pelo `Content-Length` e aplica rate limit em endpoints sensiveis.
+
+Variaveis ajustaveis:
+
+```powershell
+$env:MAX_REQUEST_BODY_BYTES="1048576"
+$env:AUTH_RATE_LIMIT_COUNT="12"
+$env:AUTH_RATE_LIMIT_WINDOW_SECONDS="60"
+$env:RECOMMENDATION_RATE_LIMIT_COUNT="30"
+$env:RECOMMENDATION_RATE_LIMIT_WINDOW_SECONDS="60"
+```
+
 ## Migracoes do Banco
 
 O backend usa Alembic para versionar o schema do banco. No startup, a API executa `upgrade head` automaticamente. Se o banco ja existir e ainda nao tiver a tabela `alembic_version`, o backend preserva as tabelas atuais e marca o schema como versionado.

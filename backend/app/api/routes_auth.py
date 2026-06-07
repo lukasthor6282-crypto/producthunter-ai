@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.security import InMemoryRateLimiter
 from app.db import get_db
 from app.dependencies.auth import get_current_session
 from app.schemas.auth_schema import AuthConfig, AuthSessionResponse, GoogleLoginRequest
@@ -15,6 +16,12 @@ from app.services.auth_service import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+settings = get_settings()
+google_login_rate_limit = InMemoryRateLimiter(
+    scope="auth_google",
+    limit=settings.auth_rate_limit_count,
+    window_seconds=settings.auth_rate_limit_window_seconds,
+)
 
 
 def _set_session_cookie(response: Response, raw_token: str, expires_at: datetime) -> None:
@@ -72,7 +79,7 @@ def auth_config() -> AuthConfig:
     )
 
 
-@router.post("/google", response_model=AuthSessionResponse)
+@router.post("/google", response_model=AuthSessionResponse, dependencies=[Depends(google_login_rate_limit)])
 def login_with_google(
     payload: GoogleLoginRequest,
     request: Request,

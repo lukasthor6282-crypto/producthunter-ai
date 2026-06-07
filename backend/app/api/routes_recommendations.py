@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
+from app.core.security import InMemoryRateLimiter
 from app.db import get_db
 from app.dependencies.auth import get_current_user
 from app.models.auth_models import User
@@ -18,9 +20,19 @@ from app.services.recommendation_history_service import (
 from app.services.recommendation_service import generate_recommendations
 
 router = APIRouter(tags=["recommendations"])
+settings = get_settings()
+generate_recommendations_rate_limit = InMemoryRateLimiter(
+    scope="recommendations_generate",
+    limit=settings.recommendation_rate_limit_count,
+    window_seconds=settings.recommendation_rate_limit_window_seconds,
+)
 
 
-@router.post("/recommendations/generate", response_model=RecommendationResponse)
+@router.post(
+    "/recommendations/generate",
+    response_model=RecommendationResponse,
+    dependencies=[Depends(generate_recommendations_rate_limit)],
+)
 def generate(
     request: RecommendationRequest,
     user: User = Depends(get_current_user),
