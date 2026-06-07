@@ -1,5 +1,5 @@
 import { ApiError, apiRequest } from "./api";
-import type { AuthConfig, AuthSession } from "../types/auth";
+import type { AuthConfig, AuthSession, SecurityAuditEventsResponse } from "../types/auth";
 
 export function getAuthConfig() {
   return apiRequest<AuthConfig>("/auth/config");
@@ -25,4 +25,8 @@ export function loginWithGoogleCredential(credential: string) {
 
 export function logoutSession() {
   return apiRequest<void>("/auth/logout", { method: "POST" });
+}
+
+export function getSecurityAuditEvents(limit = 20) {
+  return apiRequest<SecurityAuditEventsResponse>(`/auth/security-events?limit=${limit}`);
 }

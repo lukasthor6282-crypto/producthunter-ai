@@ -1,8 +1,10 @@
 import {
+  Activity,
   BadgeCheck,
   Bell,
   CalendarDays,
   Check,
+  Clock3,
   CreditCard,
   Crown,
   Database,
@@ -12,6 +14,8 @@ import {
   LockKeyhole,
   LogOut,
   Mail,
+  RefreshCw,
+  ShieldAlert,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
@@ -22,8 +26,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 
 import { useBilling } from "../hooks/useBilling";
+import { useSecurityAuditEvents } from "../hooks/useSecurityAuditEvents";
 import { brl } from "../services/format";
-import type { AuthUser } from "../types/auth";
+import type { AuthUser, SecurityAuditEvent } from "../types/auth";
 import type { BillingPlan, SubscriptionStatus } from "../types/billing";
 
 type AccountPageProps = {
@@ -32,7 +37,7 @@ type AccountPageProps = {
   isLoggingOut?: boolean;
 };
 
-type AccountTab = "profile" | "data" | "settings" | "plans";
+type AccountTab = "profile" | "data" | "settings" | "security" | "plans";
 
 type AccountSettings = {
   productAlerts: boolean;
@@ -58,6 +63,7 @@ const accountTabs: Array<{ key: AccountTab; label: string; icon: ComponentType<{
   { key: "profile", label: "Perfil", icon: UserCircle2 },
   { key: "data", label: "Dados", icon: Database },
   { key: "settings", label: "Configuracoes", icon: SlidersHorizontal },
+  { key: "security", label: "Seguranca", icon: ShieldCheck },
   { key: "plans", label: "Planos", icon: CreditCard },
 ];
 
@@ -94,6 +100,13 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
     openPortal,
     error,
   } = useBilling();
+  const {
+    events: securityEvents,
+    isLoading: isSecurityLoading,
+    isFetching: isSecurityFetching,
+    error: securityError,
+    refetch: refetchSecurityEvents,
+  } = useSecurityAuditEvents(20, Boolean(user) && activeTab === "security");
 
   useEffect(() => {
     storeAccountSettings(settings);
@@ -170,7 +183,7 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
         <AccountMetric icon={<BadgeCheck size={19} />} label="Usuarios" value={String(planSeats)} detail="assentos incluidos" tone="orange" />
       </section>
 
-      <div className="mb-6 grid gap-2 rounded-lg border border-white/10 bg-white/[0.035] p-2 sm:grid-cols-4">
+      <div className="mb-6 grid gap-2 rounded-lg border border-white/10 bg-white/[0.035] p-2 sm:grid-cols-2 lg:grid-cols-5">
         {accountTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -208,6 +221,16 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
       )}
 
       {activeTab === "settings" && <SettingsTab settings={settings} onChange={updateSetting} />}
+
+      {activeTab === "security" && (
+        <SecurityTab
+          events={securityEvents}
+          isLoading={isSecurityLoading}
+          isFetching={isSecurityFetching}
+          error={securityError}
+          onRefresh={() => void refetchSecurityEvents()}
+        />
+      )}
 
       {activeTab === "plans" && (
         <PlansTab
@@ -438,6 +461,164 @@ function SettingsTab({ settings, onChange }: { settings: AccountSettings; onChan
         </div>
       </section>
     </div>
+  );
+}
+
+function SecurityTab({
+  events,
+  isLoading,
+  isFetching,
+  error,
+  onRefresh,
+}: {
+  events: SecurityAuditEvent[];
+  isLoading: boolean;
+  isFetching: boolean;
+  error: string | null;
+  onRefresh: () => void;
+}) {
+  const lastLogin = events.find((event) => event.event_type === "auth.login" && event.status === "success");
+  const blockedAttempts = events.filter((event) => event.status === "blocked" || event.status === "failure").length;
+  const logoutEvents = events.filter((event) => event.event_type === "auth.logout").length;
+
+  return (
+    <div className="space-y-4">
+      <section className="grid gap-4 lg:grid-cols-3">
+        <div className="kombai-card p-4">
+          <div className="flex items-center justify-between gap-4">
+            <IconBox tone="green">
+              <KeyRound size={19} />
+            </IconBox>
+            <span className="kombai-chip kombai-chip-green">Sessao</span>
+          </div>
+          <p className="mt-5 text-sm font-semibold text-slate-500">Ultimo login aprovado</p>
+          <p className="mt-1 min-h-9 font-mono text-xl font-black text-white">{formatDateTime(lastLogin?.created_at)}</p>
+        </div>
+
+        <div className="kombai-card p-4">
+          <div className="flex items-center justify-between gap-4">
+            <IconBox tone="orange">
+              <ShieldAlert size={19} />
+            </IconBox>
+            <span className={blockedAttempts > 0 ? "kombai-chip kombai-chip-orange" : "kombai-chip"}>{blockedAttempts > 0 ? "Revisar" : "Normal"}</span>
+          </div>
+          <p className="mt-5 text-sm font-semibold text-slate-500">Alertas recentes</p>
+          <p className="mt-1 font-mono text-3xl font-black text-white">{blockedAttempts}</p>
+        </div>
+
+        <div className="kombai-card p-4">
+          <div className="flex items-center justify-between gap-4">
+            <IconBox tone="cyan">
+              <Activity size={19} />
+            </IconBox>
+            <span className="kombai-chip kombai-chip-cyan">20 ultimos</span>
+          </div>
+          <p className="mt-5 text-sm font-semibold text-slate-500">Eventos registrados</p>
+          <p className="mt-1 font-mono text-3xl font-black text-white">{events.length}</p>
+        </div>
+      </section>
+
+      <section className="kombai-card p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <span className="kombai-chip kombai-chip-cyan">
+              <ShieldCheck size={14} />
+              Auditoria
+            </span>
+            <h2 className="mt-4 text-2xl font-black text-white">Atividade de seguranca</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+              Historico recente de login, logout e tentativas bloqueadas da conta.
+            </p>
+          </div>
+          <button type="button" className="kombai-btn" onClick={onRefresh} disabled={isFetching}>
+            <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} />
+            {isFetching ? "Atualizando..." : "Atualizar"}
+          </button>
+        </div>
+
+        {error && (
+          <div className="mt-5 rounded-lg border border-ember/30 bg-ember/10 p-4 text-sm font-semibold text-ember">
+            {friendlySecurityError(error)}
+          </div>
+        )}
+
+        <div className="mt-5 grid gap-3">
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="data-row p-4">
+                <div className="shimmer h-16 rounded-lg bg-white/[0.06]" />
+              </div>
+            ))
+          ) : events.length === 0 ? (
+            <div className="rounded-lg border border-white/10 bg-white/[0.035] p-6 text-center">
+              <IconBox tone="cyan">
+                <Clock3 size={19} />
+              </IconBox>
+              <h3 className="mt-4 font-black text-white">Nenhum evento recente</h3>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">
+                Assim que houver login, logout ou bloqueio de seguranca, o historico aparece aqui.
+              </p>
+            </div>
+          ) : (
+            events.map((event) => <SecurityEventRow key={event.id} event={event} />)
+          )}
+        </div>
+      </section>
+
+      <section className="kombai-card kombai-card-green p-5">
+        <div className="flex items-start gap-3">
+          <IconBox tone="green">
+            <LockKeyhole size={19} />
+          </IconBox>
+          <div>
+            <h2 className="font-black text-white">Como usar esta auditoria</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Se aparecer um login desconhecido ou muitas tentativas bloqueadas, o cliente deve sair da conta,
+              revisar o e-mail Google usado no acesso e falar com o suporte. Foram registrados {logoutEvents} logouts recentes.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SecurityEventRow({ event }: { event: SecurityAuditEvent }) {
+  const Icon = auditEventIcon(event);
+  const detail = auditEventDetail(event);
+
+  return (
+    <article className="data-row p-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className={auditEventIconClass(event.status)}>
+            <Icon size={18} />
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-black text-white">{auditEventTitle(event)}</h3>
+              <span className={auditStatusClass(event.status)}>{auditStatusLabel(event.status)}</span>
+            </div>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              {formatDateTime(event.created_at)} · {auditDeviceSummary(event.user_agent)}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-2 text-sm sm:grid-cols-2 lg:min-w-[320px]">
+          <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">IP</p>
+            <p className="mt-1 break-all font-mono font-black text-white">{event.ip_address ?? "Nao registrado"}</p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">E-mail</p>
+            <p className="mt-1 break-all font-semibold text-white">{event.email ?? "Nao informado"}</p>
+          </div>
+        </div>
+      </div>
+
+      {detail && <p className="mt-4 rounded-lg border border-white/10 bg-white/[0.025] p-3 text-sm leading-6 text-slate-400">{detail}</p>}
+    </article>
   );
 }
 
@@ -721,6 +902,123 @@ function friendlyStatus(status: string) {
   if (status === "past_due") return "Pagamento pendente";
   if (status === "canceled") return "Cancelado";
   return status || "Gratuito";
+}
+
+function auditEventIcon(event: SecurityAuditEvent): ComponentType<{ size?: number; className?: string }> {
+  if (event.status === "blocked" || event.status === "failure") {
+    return ShieldAlert;
+  }
+  if (event.event_type === "auth.logout") {
+    return LogOut;
+  }
+  return KeyRound;
+}
+
+function auditEventIconClass(status: string) {
+  if (status === "success") {
+    return "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-300/25 bg-emerald-300/10 text-emerald-200";
+  }
+  if (status === "blocked" || status === "failure") {
+    return "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-amber-300/25 bg-amber-300/10 text-amber-200";
+  }
+  return "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-cyan-300/25 bg-cyan-300/10 text-cyan-200";
+}
+
+function auditEventTitle(event: SecurityAuditEvent) {
+  if (event.event_type === "auth.login" && event.status === "success") {
+    return "Login aprovado";
+  }
+  if (event.event_type === "auth.login" && event.status === "blocked") {
+    return "Login bloqueado";
+  }
+  if (event.event_type === "auth.login" && event.status === "failure") {
+    return "Falha no login";
+  }
+  if (event.event_type === "auth.logout" && event.status === "success") {
+    return "Logout realizado";
+  }
+  if (event.event_type === "auth.logout") {
+    return "Tentativa de logout";
+  }
+  return "Evento de seguranca";
+}
+
+function auditStatusLabel(status: string) {
+  if (status === "success") return "Seguro";
+  if (status === "blocked") return "Bloqueado";
+  if (status === "failure") return "Falhou";
+  return status || "Registrado";
+}
+
+function auditStatusClass(status: string) {
+  if (status === "success") return "kombai-chip kombai-chip-green";
+  if (status === "blocked" || status === "failure") return "kombai-chip kombai-chip-orange";
+  return "kombai-chip kombai-chip-cyan";
+}
+
+function auditDeviceSummary(userAgent?: string | null) {
+  if (!userAgent) {
+    return "dispositivo nao informado";
+  }
+
+  const browser = userAgent.includes("Edg/")
+    ? "Edge"
+    : userAgent.includes("Chrome/")
+      ? "Chrome"
+      : userAgent.includes("Firefox/")
+        ? "Firefox"
+        : userAgent.includes("Safari/")
+          ? "Safari"
+          : "Navegador";
+
+  const os = userAgent.includes("Android")
+    ? "Android"
+    : userAgent.includes("iPhone") || userAgent.includes("iPad")
+      ? "iOS"
+      : userAgent.includes("Windows")
+        ? "Windows"
+        : userAgent.includes("Mac OS")
+          ? "macOS"
+          : "sistema desconhecido";
+
+  return `${browser} em ${os}`;
+}
+
+function auditEventDetail(event: SecurityAuditEvent) {
+  const reason = auditDetailValue(event.details, "reason");
+  const sessionId = auditDetailValue(event.details, "session_id");
+  const parts: string[] = [];
+
+  if (reason) {
+    parts.push(`Motivo: ${friendlyAuditReason(reason)}`);
+  }
+  if (sessionId) {
+    parts.push(`Sessao: ${sessionId}`);
+  }
+
+  return parts.join(" · ");
+}
+
+function auditDetailValue(details: Record<string, unknown>, key: string) {
+  const value = details[key];
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return null;
+}
+
+function friendlyAuditReason(reason: string) {
+  if (reason === "origin_not_allowed") return "origem fora da lista permitida";
+  if (reason === "invalid_google_token") return "token Google invalido";
+  if (reason === "session_not_found") return "sessao nao encontrada";
+  return reason.replace(/_/g, " ");
+}
+
+function friendlySecurityError(error: string) {
+  if (error.includes("401") || error.toLowerCase().includes("login")) {
+    return "Faca login novamente para ver a auditoria da conta.";
+  }
+  return error;
 }
 
 function friendlyBillingError(error: string) {

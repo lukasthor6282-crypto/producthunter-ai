@@ -21,6 +21,7 @@ export function useAuth() {
     clearStoredAuthSession();
     queryClient.setQueryData(authSessionKey, null);
     queryClient.removeQueries({ queryKey: ["analytics"] });
+    queryClient.removeQueries({ queryKey: ["auth", "security-events"] });
     queryClient.removeQueries({ queryKey: ["billing", "subscription"] });
     queryClient.removeQueries({ queryKey: ["ml"] });
     queryClient.removeQueries({ queryKey: ["profit"] });
@@ -45,6 +46,7 @@ export function useAuth() {
     onSuccess: (session) => {
       storeAuthSession(session);
       queryClient.setQueryData(authSessionKey, session);
+      void queryClient.invalidateQueries({ queryKey: ["auth", "security-events"] });
     },
   });
 

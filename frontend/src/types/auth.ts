@@ -21,6 +21,21 @@ export type AuthSession = {
   access_token?: string | null;
 };
 
+export type SecurityAuditEvent = {
+  id: number;
+  event_type: string;
+  status: string;
+  email: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  details: Record<string, unknown>;
+  created_at: string;
+};
+
+export type SecurityAuditEventsResponse = {
+  items: SecurityAuditEvent[];
+};
+
 export type GoogleCredentialResponse = {
   credential?: string;
   select_by?: string;
