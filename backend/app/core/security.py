@@ -4,6 +4,7 @@ from collections import defaultdict, deque
 from collections.abc import Awaitable, Callable
 from time import monotonic
 from threading import Lock
+from urllib.parse import urlparse
 
 from fastapi import HTTPException, Request, Response, status
 from starlette.responses import JSONResponse
@@ -18,6 +19,7 @@ SECURITY_HEADERS = {
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
     "Cross-Origin-Opener-Policy": "same-origin",
 }
+UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 
 def add_security_headers(response: Response) -> None:
@@ -72,6 +74,43 @@ def client_ip(request: Request) -> str:
         return request.client.host
 
     return "unknown"
+
+
+def _origin_from_url(value: str | None) -> str | None:
+    if not value:
+        return None
+
+    parsed = urlparse(value)
+    if not parsed.scheme or not parsed.netloc:
+        return None
+
+    return f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
+
+
+def request_origin(request: Request) -> str | None:
+    origin = request.headers.get("origin")
+    if origin:
+        return origin.rstrip("/")
+
+    return _origin_from_url(request.headers.get("referer"))
+
+
+def require_trusted_origin(request: Request) -> None:
+    if request.method.upper() not in UNSAFE_METHODS:
+        return
+
+    origin = request_origin(request)
+    if not origin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Origem ausente para sessao por cookie.",
+        )
+
+    if origin not in get_settings().cors_origins:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Origem da sessao nao autorizada.",
+        )
 
 
 class InMemoryRateLimiter:

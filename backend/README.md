@@ -56,6 +56,8 @@ Em producao, mantenha HTTPS ativo, use `SESSION_COOKIE_SECURE=true` e restrinja 
 
 A API adiciona headers de seguranca em todas as respostas, bloqueia payloads grandes pelo `Content-Length` e aplica rate limit em endpoints sensiveis.
 
+Rotas autenticadas por cookie tambem validam `Origin`/`Referer` em metodos de escrita (`POST`, `PUT`, `PATCH`, `DELETE`). Isso reduz risco de CSRF quando a sessao `HttpOnly` e enviada automaticamente pelo navegador. As origens aceitas sao as mesmas configuradas em `CORS_ORIGINS`.
+
 Variaveis ajustaveis:
 
 ```powershell
