@@ -10,6 +10,9 @@ export function useRecommendations() {
       void queryClient.invalidateQueries({ queryKey: ["recommendations", "usage"] });
       void queryClient.invalidateQueries({ queryKey: ["recommendations", "history"] });
     },
+    onError: () => {
+      void queryClient.invalidateQueries({ queryKey: ["recommendations", "usage"] });
+    },
   });
 
   return {

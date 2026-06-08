@@ -75,6 +75,18 @@ export type RecommendationUsage = {
   upgrade_recommended: boolean;
 };
 
+export type RecommendationQuotaError = {
+  code: "PLAN_MONTHLY_LIMIT_REACHED" | "PLAN_RESULT_LIMIT_EXCEEDED" | string;
+  message: string;
+  planSlug?: string | null;
+  planName?: string | null;
+  periodMonth?: string | null;
+  generatedCount?: number | null;
+  monthlyLimit?: number | null;
+  remaining?: number | null;
+  maxResultsPerAnalysis?: number | null;
+};
+
 export type ProfitSimulation = {
   product_id?: number;
   unit_revenue: number;

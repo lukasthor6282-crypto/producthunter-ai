@@ -15,10 +15,10 @@ import { ProductDetail } from "./pages/ProductDetail";
 import { ProfitSimulator } from "./pages/ProfitSimulator";
 import { SubscriptionPage } from "./pages/SubscriptionPage";
 import { AILab } from "./pages/AILab";
-import { AUTH_REQUIRED_EVENT, isUnauthorizedError } from "./services/api";
+import { AUTH_REQUIRED_EVENT, getApiErrorDetail, isPlanLimitError, isUnauthorizedError } from "./services/api";
 import { useAuth } from "./hooks/useAuth";
 import { useRecommendations } from "./hooks/useRecommendations";
-import type { RecommendationItem } from "./types/recommendation";
+import type { RecommendationItem, RecommendationQuotaError } from "./types/recommendation";
 import { defaultProfile, type UserProfile } from "./types/userProfile";
 
 const protectedPages = new Set<PageKey>(["dashboard", "account", "profile", "results", "history", "product", "profit", "billing", "ai"]);
@@ -56,6 +56,35 @@ function firstProfileCompatibleRecommendation(data: { profile: UserProfile; reco
   }
 
   return data.recommendations.find((item) => item.product.niche === data.profile.niche);
+}
+
+function recommendationQuotaErrorFrom(error: unknown): RecommendationQuotaError | null {
+  if (!isPlanLimitError(error)) {
+    return null;
+  }
+
+  const detail = getApiErrorDetail(error);
+  return {
+    code: detailString(detail, "code") ?? "PLAN_LIMIT_ERROR",
+    message: detailString(detail, "message") ?? error.message,
+    planSlug: detailString(detail, "plan_slug"),
+    planName: detailString(detail, "plan_name"),
+    periodMonth: detailString(detail, "period_month"),
+    generatedCount: detailNumber(detail, "generated_count"),
+    monthlyLimit: detailNumber(detail, "monthly_limit"),
+    remaining: detailNumber(detail, "remaining"),
+    maxResultsPerAnalysis: detailNumber(detail, "max_results_per_analysis"),
+  };
+}
+
+function detailString(detail: Record<string, unknown> | null, key: string) {
+  const value = detail?.[key];
+  return typeof value === "string" ? value : null;
+}
+
+function detailNumber(detail: Record<string, unknown> | null, key: string) {
+  const value = detail?.[key];
+  return typeof value === "number" ? value : null;
 }
 
 export default function App() {
@@ -129,6 +158,11 @@ export default function App() {
     setActivePage(page);
   }, [isAuthenticated]);
 
+  const recommendationQuotaError = useMemo(
+    () => recommendationQuotaErrorFrom(rawRecommendationError),
+    [rawRecommendationError],
+  );
+
   const generate = useCallback(async (profile: UserProfile) => {
     if (!isAuthenticated) {
       setRedirectAfterLogin("profile");
@@ -198,7 +232,15 @@ export default function App() {
       ),
       dashboard: <Dashboard />,
       account: <AccountPage user={user} onLogout={handleLogout} isLoggingOut={isLoggingOut} />,
-      profile: <RecommendationProfile onGenerate={generate} isLoading={isRecommendationLoading} onOpenPlans={() => navigate("billing")} />,
+      profile: (
+        <RecommendationProfile
+          onGenerate={generate}
+          isLoading={isRecommendationLoading}
+          onOpenPlans={() => navigate("billing")}
+          quotaError={recommendationQuotaError}
+          onClearQuotaError={resetRecommendation}
+        />
+      ),
       results: <RecommendationResults data={data} selectedItem={selectedItem} onSelect={setSelectedItem} onNavigate={navigate} />,
       history: <RecommendationHistoryPage onNavigate={navigate} />,
       product: <ProductDetail item={selectedItem} />,
@@ -222,6 +264,8 @@ export default function App() {
     isLoggingOut,
     isRecommendationLoading,
     navigate,
+    recommendationQuotaError,
+    resetRecommendation,
     selectedItem,
     startDemo,
     user,
@@ -229,7 +273,7 @@ export default function App() {
 
   const isPublicPage = activePage === "landing" || activePage === "login";
   const isCompactShell = activePage === "profit" || activePage === "ai";
-  const shouldShowRecommendationError = Boolean(error && !isUnauthorizedError(rawRecommendationError));
+  const shouldShowRecommendationError = Boolean(error && !isUnauthorizedError(rawRecommendationError) && !recommendationQuotaError);
 
   return (
     <div className={isPublicPage ? "min-h-screen bg-[#07090d] text-white" : "kombai-shell min-h-screen text-white"}>

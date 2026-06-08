@@ -48,6 +48,32 @@ export function isUnauthorizedError(error: unknown): error is ApiError {
   return error instanceof ApiError && error.status === 401;
 }
 
+export function getApiErrorDetail(error: unknown): Record<string, unknown> | null {
+  if (!(error instanceof ApiError) || !error.detail || typeof error.detail !== "object") {
+    return null;
+  }
+  return error.detail as Record<string, unknown>;
+}
+
+export function getApiErrorCode(error: unknown) {
+  const detail = getApiErrorDetail(error);
+  const code = detail?.code;
+  return typeof code === "string" ? code : null;
+}
+
+export function isPlanLimitError(error: unknown): error is ApiError {
+  if (!(error instanceof ApiError)) {
+    return false;
+  }
+
+  const code = getApiErrorCode(error);
+  return (
+    error.status === 402 ||
+    code === "PLAN_MONTHLY_LIMIT_REACHED" ||
+    code === "PLAN_RESULT_LIMIT_EXCEEDED"
+  );
+}
+
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (!headers.has("Content-Type")) {
