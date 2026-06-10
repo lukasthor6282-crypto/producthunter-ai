@@ -5,6 +5,7 @@ import type {
   ProfitSimulation,
   ProfitSimulationInput,
   RecommendationHistoryResponse,
+  RecommendationInsights,
   RecommendationUsage,
   RecommendationResponse,
 } from "../types/recommendation";
@@ -19,6 +20,10 @@ export function generateRecommendations(profile: UserProfile, limit = 8) {
 
 export function getRecommendationHistory(limit = 20) {
   return apiRequest<RecommendationHistoryResponse>(`/recommendations/history?limit=${limit}`);
+}
+
+export function getRecommendationInsights(limit = 5) {
+  return apiRequest<RecommendationInsights>(`/recommendations/insights?limit=${limit}`);
 }
 
 export function getRecommendationUsage() {

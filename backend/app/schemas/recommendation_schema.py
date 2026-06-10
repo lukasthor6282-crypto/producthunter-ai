@@ -71,6 +71,41 @@ class RecommendationHistoryResponse(BaseModel):
     items: list[RecommendationHistoryItem]
 
 
+class RecommendationInsightBucket(BaseModel):
+    key: str
+    label: str
+    total_recommendations: int
+    average_opportunity_score: float
+    best_opportunity_score: float
+    average_estimated_profit: float
+
+
+class RecommendationTopProductInsight(BaseModel):
+    product_id: int
+    product_name: str
+    marketplace: str
+    marketplace_label: str
+    niche: str
+    niche_label: str
+    image_url: str | None = None
+    product_url: str | None = None
+    average_price: float
+    appearances: int
+    average_opportunity_score: float
+    best_opportunity_score: float
+    average_estimated_profit: float
+
+
+class RecommendationInsightsResponse(BaseModel):
+    total_runs: int
+    total_saved_products: int
+    average_opportunity_score: float
+    best_opportunity_score: float
+    top_niches: list[RecommendationInsightBucket] = Field(default_factory=list)
+    top_marketplaces: list[RecommendationInsightBucket] = Field(default_factory=list)
+    top_products: list[RecommendationTopProductInsight] = Field(default_factory=list)
+
+
 class RecommendationUsageResponse(BaseModel):
     period_month: str
     plan_slug: str

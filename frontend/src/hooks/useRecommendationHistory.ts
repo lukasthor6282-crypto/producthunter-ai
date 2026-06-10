@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getRecommendationHistory, getRecommendationUsage } from "../services/recommendationApi";
+import { getRecommendationHistory, getRecommendationInsights, getRecommendationUsage } from "../services/recommendationApi";
 
 export function useRecommendationHistory(limit = 20) {
   const historyQuery = useQuery({
@@ -12,19 +12,26 @@ export function useRecommendationHistory(limit = 20) {
     queryKey: ["recommendations", "usage"],
     queryFn: getRecommendationUsage,
   });
+  const insightsQuery = useQuery({
+    queryKey: ["recommendations", "insights", 5],
+    queryFn: () => getRecommendationInsights(5),
+  });
 
   const historyError = historyQuery.error instanceof Error ? historyQuery.error.message : null;
   const usageError = usageQuery.error instanceof Error ? usageQuery.error.message : null;
+  const insightsError = insightsQuery.error instanceof Error ? insightsQuery.error.message : null;
 
   return {
     items: historyQuery.data?.items ?? [],
     usage: usageQuery.data ?? null,
-    isLoading: historyQuery.isLoading || usageQuery.isLoading,
-    isFetching: historyQuery.isFetching || usageQuery.isFetching,
-    error: historyError ?? usageError,
+    insights: insightsQuery.data ?? null,
+    isLoading: historyQuery.isLoading || usageQuery.isLoading || insightsQuery.isLoading,
+    isFetching: historyQuery.isFetching || usageQuery.isFetching || insightsQuery.isFetching,
+    error: historyError ?? usageError ?? insightsError,
     refetch: () => {
       void historyQuery.refetch();
       void usageQuery.refetch();
+      void insightsQuery.refetch();
     },
   };
 }

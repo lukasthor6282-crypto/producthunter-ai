@@ -43,6 +43,9 @@ class RecommendationRunItem(Base):
     __tablename__ = "recommendation_run_items"
     __table_args__ = (
         Index("ix_recommendation_run_items_product", "product_id", "source", "source_product_id"),
+        Index("ix_recommendation_run_items_product_score", "product_id", "opportunity_score"),
+        Index("ix_recommendation_run_items_marketplace_score", "marketplace", "opportunity_score"),
+        Index("ix_recommendation_run_items_niche_score", "niche", "opportunity_score"),
         Index("ix_recommendation_run_items_rank", "run_id", "rank"),
     )
 

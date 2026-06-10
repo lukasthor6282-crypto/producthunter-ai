@@ -1,11 +1,15 @@
 import { motion } from "framer-motion";
 import {
+  BarChart3,
   CalendarClock,
   History,
   PackageSearch,
   RefreshCw,
   Sparkles,
+  Store,
+  Tags,
   TrendingUp,
+  Trophy,
   WalletCards,
 } from "lucide-react";
 import { useMemo } from "react";
@@ -15,7 +19,13 @@ import type { PageKey } from "../components/layout/Sidebar";
 import { ProductImage } from "../components/product/ProductImage";
 import { useRecommendationHistory } from "../hooks/useRecommendationHistory";
 import { brl, percent } from "../services/format";
-import type { RecommendationHistoryItem, RecommendationHistoryProduct } from "../types/recommendation";
+import type {
+  RecommendationHistoryItem,
+  RecommendationHistoryProduct,
+  RecommendationInsightBucket,
+  RecommendationInsights,
+  RecommendationTopProductInsight,
+} from "../types/recommendation";
 import { profileOptionLabel } from "../types/userProfile";
 
 type RecommendationHistoryProps = {
@@ -37,7 +47,7 @@ function formatDateTime(value: string) {
 }
 
 export function RecommendationHistoryPage({ onNavigate }: RecommendationHistoryProps) {
-  const { items, usage, isLoading, isFetching, error, refetch } = useRecommendationHistory(30);
+  const { items, usage, insights, isLoading, isFetching, error, refetch } = useRecommendationHistory(30);
 
   const summary = useMemo(() => {
     const productCount = items.reduce((total, run) => total + (run.items?.length ?? 0), 0);
@@ -126,6 +136,8 @@ export function RecommendationHistoryPage({ onNavigate }: RecommendationHistoryP
           </div>
         </section>
 
+        <RecommendationInsightsPanel insights={insights} isLoading={isLoading} />
+
         {error ? (
           <section className="kombai-card border-ember/30 bg-ember/10 p-6">
             <span className="kombai-chip kombai-chip-orange">Erro no historico</span>
@@ -181,6 +193,171 @@ function SummaryMetric({
       <p className="mt-6 font-mono text-4xl font-black text-white">{value}</p>
       <p className="mt-2 text-sm font-semibold text-slate-500">{detail}</p>
     </article>
+  );
+}
+
+function RecommendationInsightsPanel({ insights, isLoading }: { insights: RecommendationInsights | null; isLoading: boolean }) {
+  if (isLoading && !insights) {
+    return (
+      <section className="kombai-card p-5">
+        <div className="shimmer h-7 w-56 rounded-lg bg-white/10" />
+        <div className="mt-5 grid gap-4 lg:grid-cols-3">
+          <div className="shimmer h-40 rounded-lg bg-white/10" />
+          <div className="shimmer h-40 rounded-lg bg-white/10" />
+          <div className="shimmer h-40 rounded-lg bg-white/10" />
+        </div>
+      </section>
+    );
+  }
+
+  if (!insights || insights.total_saved_products === 0) {
+    return (
+      <section className="kombai-card p-5">
+        <div className="flex items-start gap-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-cyan-300/25 bg-cyan-300/10 text-cyan-200">
+            <BarChart3 size={20} />
+          </span>
+          <div>
+            <h2 className="text-lg font-black text-white">Inteligencia do banco</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Gere algumas recomendacoes para o banco revelar nichos, marketplaces e produtos mais fortes para esta conta.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="kombai-card p-5">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="flex items-start gap-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-cyan-300/25 bg-cyan-300/10 text-cyan-200">
+            <BarChart3 size={20} />
+          </span>
+          <div>
+            <h2 className="text-lg font-black text-white">Inteligencia do banco de recomendacoes</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Agregacao das analises salvas para mostrar onde a conta esta encontrando mais oportunidade.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-right">
+          <RunMetric label="score medio" value={Math.round(insights.average_opportunity_score).toString()} tone="cyan" />
+          <RunMetric label="melhor score" value={Math.round(insights.best_opportunity_score).toString()} />
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-[0.8fr_0.8fr_1.4fr]">
+        <InsightList
+          icon={<Tags size={18} />}
+          title="Top nichos"
+          items={insights.top_niches}
+          empty="Sem nichos ainda"
+        />
+        <InsightList
+          icon={<Store size={18} />}
+          title="Top marketplaces"
+          items={insights.top_marketplaces}
+          empty="Sem marketplaces ainda"
+        />
+        <TopProductsInsight products={insights.top_products} />
+      </div>
+    </section>
+  );
+}
+
+function InsightList({
+  icon,
+  title,
+  items,
+  empty,
+}: {
+  icon: ReactNode;
+  title: string;
+  items: RecommendationInsightBucket[];
+  empty: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
+      <div className="mb-4 flex items-center gap-3">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.045] text-cyan-200">
+          {icon}
+        </span>
+        <h3 className="font-black text-white">{title}</h3>
+      </div>
+      <div className="space-y-3">
+        {items.length ? (
+          items.map((item) => <InsightBucketRow key={item.key} item={item} />)
+        ) : (
+          <p className="text-sm font-semibold text-slate-500">{empty}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InsightBucketRow({ item }: { item: RecommendationInsightBucket }) {
+  return (
+    <div className="rounded-md border border-white/10 bg-white/[0.03] p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-black text-white">{item.label}</p>
+          <p className="mt-1 text-xs font-semibold text-slate-500">{item.total_recommendations} recomendacoes</p>
+        </div>
+        <span className="font-mono text-xl font-black text-cyan-200">{Math.round(item.average_opportunity_score)}</span>
+      </div>
+      <p className="mt-2 text-xs font-semibold text-slate-500">
+        Lucro medio {brl.format(item.average_estimated_profit)} - melhor score {Math.round(item.best_opportunity_score)}
+      </p>
+    </div>
+  );
+}
+
+function TopProductsInsight({ products }: { products: RecommendationTopProductInsight[] }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
+      <div className="mb-4 flex items-center gap-3">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.045] text-cyan-200">
+          <Trophy size={18} />
+        </span>
+        <h3 className="font-black text-white">Produtos recorrentes</h3>
+      </div>
+      <div className="space-y-3">
+        {products.length ? (
+          products.map((product) => <TopProductInsightRow key={`${product.product_id}-${product.marketplace}`} product={product} />)
+        ) : (
+          <p className="text-sm font-semibold text-slate-500">Sem produtos recorrentes ainda</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TopProductInsightRow({ product }: { product: RecommendationTopProductInsight }) {
+  return (
+    <div className="rounded-md border border-white/10 bg-white/[0.03] p-3">
+      <div className="grid gap-3 sm:grid-cols-[52px_1fr_auto] sm:items-center">
+        <ProductImage product={{ name: product.product_name, image_url: product.image_url }} className="h-14 w-14" />
+        <div className="min-w-0">
+          <p className="truncate font-black text-white">{product.product_name}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="rounded-md bg-orange-500/15 px-2 py-1 text-[11px] font-black text-orange-300">
+              {product.marketplace_label}
+            </span>
+            <span className="rounded-md bg-emerald-500/12 px-2 py-1 text-[11px] font-black text-emerald-200">
+              {product.niche_label}
+            </span>
+          </div>
+        </div>
+        <div className="text-left sm:text-right">
+          <p className="font-mono text-xl font-black text-cyan-200">{Math.round(product.average_opportunity_score)}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+            {product.appearances}x
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 

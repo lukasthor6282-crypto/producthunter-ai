@@ -62,6 +62,41 @@ export type RecommendationHistoryResponse = {
   items: RecommendationHistoryItem[];
 };
 
+export type RecommendationInsightBucket = {
+  key: string;
+  label: string;
+  total_recommendations: number;
+  average_opportunity_score: number;
+  best_opportunity_score: number;
+  average_estimated_profit: number;
+};
+
+export type RecommendationTopProductInsight = {
+  product_id: number;
+  product_name: string;
+  marketplace: string;
+  marketplace_label: string;
+  niche: string;
+  niche_label: string;
+  image_url?: string | null;
+  product_url?: string | null;
+  average_price: number;
+  appearances: number;
+  average_opportunity_score: number;
+  best_opportunity_score: number;
+  average_estimated_profit: number;
+};
+
+export type RecommendationInsights = {
+  total_runs: number;
+  total_saved_products: number;
+  average_opportunity_score: number;
+  best_opportunity_score: number;
+  top_niches: RecommendationInsightBucket[];
+  top_marketplaces: RecommendationInsightBucket[];
+  top_products: RecommendationTopProductInsight[];
+};
+
 export type RecommendationUsage = {
   period_month: string;
   plan_slug: string;

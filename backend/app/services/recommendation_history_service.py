@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.auth_models import User
@@ -13,8 +13,11 @@ from app.schemas.recommendation_schema import (
     RecommendationHistoryItem,
     RecommendationHistoryProduct,
     RecommendationHistoryResponse,
+    RecommendationInsightBucket,
+    RecommendationInsightsResponse,
     RecommendationRequest,
     RecommendationResponse,
+    RecommendationTopProductInsight,
     RecommendationUsageResponse,
 )
 from app.services.billing_service import active_plan_slug, plan_limits
@@ -234,3 +237,137 @@ def list_recommendation_history(db: Session, user: User, limit: int = 20) -> Rec
         )
 
     return RecommendationHistoryResponse(items=items)
+
+
+def recommendation_insights(db: Session, user: User, limit: int = 5) -> RecommendationInsightsResponse:
+    total_runs = db.scalar(
+        select(func.count(RecommendationRun.id)).where(RecommendationRun.user_id == user.id)
+    ) or 0
+    total_saved_products = db.scalar(
+        select(func.count(RecommendationRunItem.id))
+        .join(RecommendationRun, RecommendationRunItem.run_id == RecommendationRun.id)
+        .where(RecommendationRun.user_id == user.id)
+    ) or 0
+
+    score_summary = db.execute(
+        select(
+            func.coalesce(func.avg(RecommendationRunItem.opportunity_score), 0),
+            func.coalesce(func.max(RecommendationRunItem.opportunity_score), 0),
+        )
+        .join(RecommendationRun, RecommendationRunItem.run_id == RecommendationRun.id)
+        .where(RecommendationRun.user_id == user.id)
+    ).one()
+
+    return RecommendationInsightsResponse(
+        total_runs=int(total_runs),
+        total_saved_products=int(total_saved_products),
+        average_opportunity_score=round(float(score_summary[0] or 0), 2),
+        best_opportunity_score=round(float(score_summary[1] or 0), 2),
+        top_niches=_insight_buckets(db, user, "niche", "niche_label", limit),
+        top_marketplaces=_insight_buckets(db, user, "marketplace", "marketplace_label", limit),
+        top_products=_top_product_insights(db, user, limit),
+    )
+
+
+def _insight_buckets(
+    db: Session,
+    user: User,
+    key_column_name: str,
+    label_column_name: str,
+    limit: int,
+) -> list[RecommendationInsightBucket]:
+    item = RecommendationRunItem
+    key_column = getattr(item, key_column_name)
+    label_column = getattr(item, label_column_name)
+    total_recommendations = func.count(item.id).label("total_recommendations")
+    average_score = func.coalesce(func.avg(item.opportunity_score), 0).label("average_opportunity_score")
+    best_score = func.coalesce(func.max(item.opportunity_score), 0).label("best_opportunity_score")
+    average_profit = func.coalesce(func.avg(item.estimated_profit), 0).label("average_estimated_profit")
+
+    rows = db.execute(
+        select(
+            key_column,
+            label_column,
+            total_recommendations,
+            average_score,
+            best_score,
+            average_profit,
+        )
+        .join(RecommendationRun, item.run_id == RecommendationRun.id)
+        .where(RecommendationRun.user_id == user.id)
+        .group_by(key_column, label_column)
+        .order_by(total_recommendations.desc(), average_score.desc())
+        .limit(limit)
+    ).all()
+
+    return [
+        RecommendationInsightBucket(
+            key=str(row[0]),
+            label=str(row[1]),
+            total_recommendations=int(row[2] or 0),
+            average_opportunity_score=round(float(row[3] or 0), 2),
+            best_opportunity_score=round(float(row[4] or 0), 2),
+            average_estimated_profit=round(float(row[5] or 0), 2),
+        )
+        for row in rows
+    ]
+
+
+def _top_product_insights(db: Session, user: User, limit: int) -> list[RecommendationTopProductInsight]:
+    item = RecommendationRunItem
+    average_price = func.coalesce(func.avg(item.average_price), 0).label("average_price")
+    appearances = func.count(item.id).label("appearances")
+    average_score = func.coalesce(func.avg(item.opportunity_score), 0).label("average_opportunity_score")
+    best_score = func.coalesce(func.max(item.opportunity_score), 0).label("best_opportunity_score")
+    average_profit = func.coalesce(func.avg(item.estimated_profit), 0).label("average_estimated_profit")
+
+    rows = db.execute(
+        select(
+            item.product_id,
+            item.product_name,
+            item.marketplace,
+            item.marketplace_label,
+            item.niche,
+            item.niche_label,
+            item.image_url,
+            item.product_url,
+            average_price,
+            appearances,
+            average_score,
+            best_score,
+            average_profit,
+        )
+        .join(RecommendationRun, item.run_id == RecommendationRun.id)
+        .where(RecommendationRun.user_id == user.id)
+        .group_by(
+            item.product_id,
+            item.product_name,
+            item.marketplace,
+            item.marketplace_label,
+            item.niche,
+            item.niche_label,
+            item.image_url,
+            item.product_url,
+        )
+        .order_by(appearances.desc(), average_score.desc())
+        .limit(limit)
+    ).all()
+
+    return [
+        RecommendationTopProductInsight(
+            product_id=int(row[0]),
+            product_name=str(row[1]),
+            marketplace=str(row[2]),
+            marketplace_label=str(row[3]),
+            niche=str(row[4]),
+            niche_label=str(row[5]),
+            image_url=row[6],
+            product_url=row[7],
+            average_price=round(float(row[8] or 0), 2),
+            appearances=int(row[9] or 0),
+            average_opportunity_score=round(float(row[10] or 0), 2),
+            best_opportunity_score=round(float(row[11] or 0), 2),
+            average_estimated_profit=round(float(row[12] or 0), 2),
+        )
+        for row in rows
+    ]

@@ -8,6 +8,7 @@ from app.dependencies.auth import get_current_user
 from app.models.auth_models import User
 from app.schemas.recommendation_schema import (
     RecommendationHistoryResponse,
+    RecommendationInsightsResponse,
     RecommendationRequest,
     RecommendationResponse,
     RecommendationUsageResponse,
@@ -15,6 +16,7 @@ from app.schemas.recommendation_schema import (
 from app.services.recommendation_history_service import (
     ensure_recommendation_quota,
     list_recommendation_history,
+    recommendation_insights,
     recommendation_usage_status,
     save_recommendation_run,
 )
@@ -62,6 +64,15 @@ def history(
     db: Session = Depends(get_db),
 ) -> RecommendationHistoryResponse:
     return list_recommendation_history(db, user, limit=limit)
+
+
+@router.get("/recommendations/insights", response_model=RecommendationInsightsResponse)
+def insights(
+    limit: int = Query(default=5, ge=1, le=20),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> RecommendationInsightsResponse:
+    return recommendation_insights(db, user, limit=limit)
 
 
 @router.get("/recommendations/usage", response_model=RecommendationUsageResponse)
