@@ -19,3 +19,23 @@ class SecurityAuditEventResponse(BaseModel):
 
 class SecurityAuditEventsResponse(BaseModel):
     items: list[SecurityAuditEventResponse]
+
+
+class SecuritySessionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    ip_address: str | None = None
+    user_agent: str | None = None
+    created_at: datetime
+    last_seen_at: datetime | None = None
+    expires_at: datetime
+    is_current: bool
+
+
+class SecuritySessionsResponse(BaseModel):
+    items: list[SecuritySessionResponse]
+
+
+class RevokeSecuritySessionResponse(BaseModel):
+    revoked_count: int

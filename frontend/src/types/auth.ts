@@ -36,6 +36,24 @@ export type SecurityAuditEventsResponse = {
   items: SecurityAuditEvent[];
 };
 
+export type SecuritySession = {
+  id: number;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  last_seen_at: string | null;
+  expires_at: string;
+  is_current: boolean;
+};
+
+export type SecuritySessionsResponse = {
+  items: SecuritySession[];
+};
+
+export type RevokeSecuritySessionResponse = {
+  revoked_count: number;
+};
+
 export type GoogleCredentialResponse = {
   credential?: string;
   select_by?: string;

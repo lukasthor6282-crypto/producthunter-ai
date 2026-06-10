@@ -1,5 +1,11 @@
 import { ApiError, apiRequest } from "./api";
-import type { AuthConfig, AuthSession, SecurityAuditEventsResponse } from "../types/auth";
+import type {
+  AuthConfig,
+  AuthSession,
+  RevokeSecuritySessionResponse,
+  SecurityAuditEventsResponse,
+  SecuritySessionsResponse,
+} from "../types/auth";
 
 export function getAuthConfig() {
   return apiRequest<AuthConfig>("/auth/config");
@@ -29,4 +35,16 @@ export function logoutSession() {
 
 export function getSecurityAuditEvents(limit = 20) {
   return apiRequest<SecurityAuditEventsResponse>(`/auth/security-events?limit=${limit}`);
+}
+
+export function getSecuritySessions() {
+  return apiRequest<SecuritySessionsResponse>("/auth/sessions");
+}
+
+export function revokeSecuritySession(sessionId: number) {
+  return apiRequest<RevokeSecuritySessionResponse>(`/auth/sessions/${sessionId}`, { method: "DELETE" });
+}
+
+export function revokeOtherSecuritySessions() {
+  return apiRequest<RevokeSecuritySessionResponse>("/auth/sessions", { method: "DELETE" });
 }

@@ -18,14 +18,29 @@ SECURITY_HEADERS = {
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
     "Cross-Origin-Opener-Policy": "same-origin",
+    "X-Permitted-Cross-Domain-Policies": "none",
 }
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+DOCS_PATHS = {"/docs", "/redoc", "/openapi.json"}
+API_CONTENT_SECURITY_POLICY = (
+    "default-src 'none'; "
+    "base-uri 'none'; "
+    "frame-ancestors 'none'; "
+    "form-action 'none'"
+)
 
 
-def add_security_headers(response: Response) -> None:
+def add_security_headers(response: Response, request: Request | None = None) -> None:
     settings = get_settings()
     for header, value in SECURITY_HEADERS.items():
         response.headers.setdefault(header, value)
+
+    if request is None or request.url.path not in DOCS_PATHS:
+        response.headers.setdefault("Content-Security-Policy", API_CONTENT_SECURITY_POLICY)
+
+    if request is not None and request.url.path.startswith("/auth"):
+        response.headers.setdefault("Cache-Control", "no-store")
+        response.headers.setdefault("Pragma", "no-cache")
 
     if settings.session_cookie_secure:
         response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
@@ -36,7 +51,7 @@ async def security_headers_middleware(
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
     response = await call_next(request)
-    add_security_headers(response)
+    add_security_headers(response, request)
     return response
 
 
@@ -58,7 +73,7 @@ async def request_size_limit_middleware(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 content={"detail": "Requisicao muito grande."},
             )
-            add_security_headers(response)
+            add_security_headers(response, request)
             return response
 
     return await call_next(request)

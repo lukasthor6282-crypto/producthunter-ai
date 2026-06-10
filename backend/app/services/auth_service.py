@@ -161,6 +161,56 @@ def enforce_active_session_limit(db: Session, user_id: int, now: datetime | None
         old_session.revoked_at = now
 
 
+def list_active_sessions(db: Session, user: User) -> list[UserSession]:
+    now = utcnow()
+    return list(
+        db.scalars(
+            select(UserSession)
+            .where(
+                UserSession.user_id == user.id,
+                UserSession.revoked_at.is_(None),
+                UserSession.expires_at > now,
+            )
+            .order_by(UserSession.last_seen_at.desc(), UserSession.created_at.desc(), UserSession.id.desc())
+        ).all()
+    )
+
+
+def revoke_user_session(db: Session, user: User, session_id: int) -> UserSession | None:
+    session = db.scalar(
+        select(UserSession).where(
+            UserSession.id == session_id,
+            UserSession.user_id == user.id,
+            UserSession.revoked_at.is_(None),
+        )
+    )
+    if session is None:
+        return None
+
+    session.revoked_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(session)
+    return session
+
+
+def revoke_other_user_sessions(db: Session, user: User, current_session_id: int) -> int:
+    now = datetime.now(timezone.utc)
+    sessions = db.scalars(
+        select(UserSession).where(
+            UserSession.user_id == user.id,
+            UserSession.id != current_session_id,
+            UserSession.revoked_at.is_(None),
+            UserSession.expires_at > now,
+        )
+    ).all()
+
+    for session in sessions:
+        session.revoked_at = now
+
+    db.commit()
+    return len(sessions)
+
+
 def get_valid_session(db: Session, raw_token: str | None) -> UserSession | None:
     if not raw_token:
         return None

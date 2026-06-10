@@ -4,15 +4,23 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response,
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.security import InMemoryRateLimiter
+from app.core.security import InMemoryRateLimiter, require_trusted_origin
 from app.db import get_db
 from app.dependencies.auth import get_current_session
-from app.schemas.security_schema import SecurityAuditEventsResponse
+from app.schemas.security_schema import (
+    RevokeSecuritySessionResponse,
+    SecurityAuditEventsResponse,
+    SecuritySessionResponse,
+    SecuritySessionsResponse,
+)
 from app.schemas.auth_schema import AuthConfig, AuthSessionResponse, GoogleLoginRequest
 from app.services.audit_service import list_user_security_events, safe_record_security_event
 from app.services.auth_service import (
     create_user_session,
+    list_active_sessions,
+    revoke_other_user_sessions,
     revoke_session,
+    revoke_user_session,
     upsert_google_user,
     verify_google_credential,
 )
@@ -54,9 +62,7 @@ def _clear_session_cookie(response: Response) -> None:
 
 
 def _validate_origin(request: Request) -> None:
-    origin = request.headers.get("origin")
-    if origin and origin not in get_settings().cors_origins:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Origem nao autorizada.")
+    require_trusted_origin(request)
 
 
 def _bearer_token(request: Request) -> str | None:
@@ -81,6 +87,18 @@ def _audit_auth_exception(db: Session, request: Request, exc: HTTPException) -> 
             "status_code": exc.status_code,
             "reason": str(exc.detail),
         },
+    )
+
+
+def _security_session_response(session, current_session_id: int) -> SecuritySessionResponse:
+    return SecuritySessionResponse(
+        id=session.id,
+        ip_address=session.ip_address,
+        user_agent=session.user_agent,
+        created_at=session.created_at,
+        last_seen_at=session.last_seen_at,
+        expires_at=session.expires_at,
+        is_current=session.id == current_session_id,
     )
 
 
@@ -142,9 +160,85 @@ def security_events(
     return SecurityAuditEventsResponse(items=list_user_security_events(db, session.user, limit=limit))
 
 
+@router.get("/sessions", response_model=SecuritySessionsResponse)
+def active_sessions(
+    session=Depends(get_current_session),
+    db: Session = Depends(get_db),
+) -> SecuritySessionsResponse:
+    sessions = list_active_sessions(db, session.user)
+    return SecuritySessionsResponse(
+        items=[_security_session_response(item, session.id) for item in sessions],
+    )
+
+
+@router.delete("/sessions", response_model=RevokeSecuritySessionResponse)
+def revoke_other_sessions(
+    request: Request,
+    session=Depends(get_current_session),
+    db: Session = Depends(get_db),
+) -> RevokeSecuritySessionResponse:
+    require_trusted_origin(request)
+    revoked_count = revoke_other_user_sessions(db, session.user, session.id)
+    safe_record_security_event(
+        db,
+        "auth.sessions_revoked",
+        "success",
+        user=session.user,
+        request=request,
+        details={"scope": "other_sessions", "revoked_count": revoked_count, "session_id": session.id},
+    )
+    return RevokeSecuritySessionResponse(revoked_count=revoked_count)
+
+
+@router.delete("/sessions/{session_id}", response_model=RevokeSecuritySessionResponse)
+def revoke_active_session(
+    session_id: int,
+    request: Request,
+    session=Depends(get_current_session),
+    db: Session = Depends(get_db),
+) -> RevokeSecuritySessionResponse:
+    require_trusted_origin(request)
+    if session_id == session.id:
+        safe_record_security_event(
+            db,
+            "auth.session_revoke",
+            "blocked",
+            user=session.user,
+            request=request,
+            details={"reason": "current_session", "session_id": session_id},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Use sair da conta para encerrar a sessao atual.",
+        )
+
+    revoked_session = revoke_user_session(db, session.user, session_id)
+    if revoked_session is None:
+        safe_record_security_event(
+            db,
+            "auth.session_revoke",
+            "failure",
+            user=session.user,
+            request=request,
+            details={"reason": "session_not_found", "session_id": session_id},
+        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sessao nao encontrada.")
+
+    safe_record_security_event(
+        db,
+        "auth.session_revoke",
+        "success",
+        user=session.user,
+        request=request,
+        details={"session_id": revoked_session.id},
+    )
+    return RevokeSecuritySessionResponse(revoked_count=1)
+
+
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(request: Request, response: Response, db: Session = Depends(get_db)) -> Response:
     settings = get_settings()
+    require_trusted_origin(request)
     revoked_session = revoke_session(db, _bearer_token(request) or request.cookies.get(settings.session_cookie_name))
     safe_record_security_event(
         db,

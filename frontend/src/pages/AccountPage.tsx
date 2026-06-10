@@ -14,6 +14,7 @@ import {
   LockKeyhole,
   LogOut,
   Mail,
+  MonitorSmartphone,
   RefreshCw,
   ShieldAlert,
   ShieldCheck,
@@ -27,8 +28,9 @@ import type { ComponentType, ReactNode } from "react";
 
 import { useBilling } from "../hooks/useBilling";
 import { useSecurityAuditEvents } from "../hooks/useSecurityAuditEvents";
+import { useSecuritySessions } from "../hooks/useSecuritySessions";
 import { brl } from "../services/format";
-import type { AuthUser, SecurityAuditEvent } from "../types/auth";
+import type { AuthUser, SecurityAuditEvent, SecuritySession } from "../types/auth";
 import type { BillingPlan, SubscriptionStatus } from "../types/billing";
 
 type AccountPageProps = {
@@ -108,6 +110,17 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
     error: securityError,
     refetch: refetchSecurityEvents,
   } = useSecurityAuditEvents(20, Boolean(user) && activeTab === "security");
+  const {
+    sessions: securitySessions,
+    isLoading: isSessionsLoading,
+    isFetching: isSessionsFetching,
+    error: sessionsError,
+    refetch: refetchSecuritySessions,
+    revokeSession,
+    revokeOtherSessions,
+    revokingSessionId,
+    isRevokingOtherSessions,
+  } = useSecuritySessions(Boolean(user) && activeTab === "security");
 
   useEffect(() => {
     storeAccountSettings(settings);
@@ -231,7 +244,18 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
           isLoading={isSecurityLoading}
           isFetching={isSecurityFetching}
           error={securityError}
-          onRefresh={() => void refetchSecurityEvents()}
+          sessions={securitySessions}
+          isSessionsLoading={isSessionsLoading}
+          isSessionsFetching={isSessionsFetching}
+          sessionsError={sessionsError}
+          revokingSessionId={revokingSessionId}
+          isRevokingOtherSessions={isRevokingOtherSessions}
+          onRefresh={() => {
+            void refetchSecurityEvents();
+            void refetchSecuritySessions();
+          }}
+          onRevokeSession={(sessionId) => void revokeSession(sessionId)}
+          onRevokeOtherSessions={() => void revokeOtherSessions()}
         />
       )}
 
@@ -472,17 +496,34 @@ function SecurityTab({
   isLoading,
   isFetching,
   error,
+  sessions,
+  isSessionsLoading,
+  isSessionsFetching,
+  sessionsError,
+  revokingSessionId,
+  isRevokingOtherSessions,
   onRefresh,
+  onRevokeSession,
+  onRevokeOtherSessions,
 }: {
   events: SecurityAuditEvent[];
   isLoading: boolean;
   isFetching: boolean;
   error: string | null;
+  sessions: SecuritySession[];
+  isSessionsLoading: boolean;
+  isSessionsFetching: boolean;
+  sessionsError: string | null;
+  revokingSessionId: number | null;
+  isRevokingOtherSessions: boolean;
   onRefresh: () => void;
+  onRevokeSession: (sessionId: number) => void;
+  onRevokeOtherSessions: () => void;
 }) {
   const lastLogin = events.find((event) => event.event_type === "auth.login" && event.status === "success");
   const blockedAttempts = events.filter((event) => event.status === "blocked" || event.status === "failure").length;
   const logoutEvents = events.filter((event) => event.event_type === "auth.logout").length;
+  const activeSessionCount = sessions.length;
 
   return (
     <div className="space-y-4">
@@ -514,12 +555,24 @@ function SecurityTab({
             <IconBox tone="cyan">
               <Activity size={19} />
             </IconBox>
-            <span className="kombai-chip kombai-chip-cyan">20 ultimos</span>
+            <span className="kombai-chip kombai-chip-cyan">Ao vivo</span>
           </div>
-          <p className="mt-5 text-sm font-semibold text-slate-500">Eventos registrados</p>
-          <p className="mt-1 font-mono text-3xl font-black text-white">{events.length}</p>
+          <p className="mt-5 text-sm font-semibold text-slate-500">Sessoes ativas</p>
+          <p className="mt-1 font-mono text-3xl font-black text-white">{activeSessionCount}</p>
         </div>
       </section>
+
+      <ActiveSessionsPanel
+        sessions={sessions}
+        isLoading={isSessionsLoading}
+        isFetching={isSessionsFetching}
+        error={sessionsError}
+        revokingSessionId={revokingSessionId}
+        isRevokingOtherSessions={isRevokingOtherSessions}
+        onRefresh={onRefresh}
+        onRevokeSession={onRevokeSession}
+        onRevokeOtherSessions={onRevokeOtherSessions}
+      />
 
       <section className="kombai-card p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -586,6 +639,162 @@ function SecurityTab({
   );
 }
 
+function ActiveSessionsPanel({
+  sessions,
+  isLoading,
+  isFetching,
+  error,
+  revokingSessionId,
+  isRevokingOtherSessions,
+  onRefresh,
+  onRevokeSession,
+  onRevokeOtherSessions,
+}: {
+  sessions: SecuritySession[];
+  isLoading: boolean;
+  isFetching: boolean;
+  error: string | null;
+  revokingSessionId: number | null;
+  isRevokingOtherSessions: boolean;
+  onRefresh: () => void;
+  onRevokeSession: (sessionId: number) => void;
+  onRevokeOtherSessions: () => void;
+}) {
+  const otherSessionsCount = sessions.filter((session) => !session.is_current).length;
+
+  const confirmRevokeSession = (sessionId: number) => {
+    if (window.confirm("Encerrar esta sessao neste dispositivo?")) {
+      onRevokeSession(sessionId);
+    }
+  };
+
+  const confirmRevokeOtherSessions = () => {
+    if (otherSessionsCount <= 0) return;
+    if (window.confirm(`Encerrar ${otherSessionsCount} sessao(oes) antigas e manter apenas esta?`)) {
+      onRevokeOtherSessions();
+    }
+  };
+
+  return (
+    <section className="kombai-card p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <span className="kombai-chip kombai-chip-green">
+            <MonitorSmartphone size={14} />
+            Sessoes
+          </span>
+          <h2 className="mt-4 text-2xl font-black text-white">Dispositivos conectados</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+            Veja onde a conta esta ativa e encerre acessos antigos sem afetar a sessao atual.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className="kombai-btn" onClick={onRefresh} disabled={isFetching}>
+            <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} />
+            Atualizar
+          </button>
+          <button
+            type="button"
+            className="kombai-btn kombai-btn-solid"
+            onClick={confirmRevokeOtherSessions}
+            disabled={otherSessionsCount === 0 || isRevokingOtherSessions}
+          >
+            <LogOut size={16} />
+            {isRevokingOtherSessions ? "Encerrando..." : "Encerrar outras"}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mt-5 rounded-lg border border-ember/30 bg-ember/10 p-4 text-sm font-semibold text-ember">
+          {friendlySecurityError(error)}
+        </div>
+      )}
+
+      <div className="mt-5 grid gap-3">
+        {isLoading ? (
+          Array.from({ length: 2 }).map((_, index) => (
+            <div key={index} className="data-row p-4">
+              <div className="shimmer h-20 rounded-lg bg-white/[0.06]" />
+            </div>
+          ))
+        ) : sessions.length === 0 ? (
+          <div className="rounded-lg border border-white/10 bg-white/[0.035] p-6 text-center">
+            <IconBox tone="cyan">
+              <KeyRound size={19} />
+            </IconBox>
+            <h3 className="mt-4 font-black text-white">Nenhuma sessao ativa encontrada</h3>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-500">
+              Quando a conta estiver autenticada, os dispositivos ativos aparecem aqui.
+            </p>
+          </div>
+        ) : (
+          sessions.map((session) => (
+            <SecuritySessionRow
+              key={session.id}
+              session={session}
+              isRevoking={revokingSessionId === session.id}
+              isRevokingOtherSessions={isRevokingOtherSessions}
+              onRevoke={() => confirmRevokeSession(session.id)}
+            />
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SecuritySessionRow({
+  session,
+  isRevoking,
+  isRevokingOtherSessions,
+  onRevoke,
+}: {
+  session: SecuritySession;
+  isRevoking: boolean;
+  isRevokingOtherSessions: boolean;
+  onRevoke: () => void;
+}) {
+  return (
+    <article className={session.is_current ? "data-row-highlight p-4" : "data-row p-4"}>
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-cyan-300/20 bg-cyan-300/10 text-cyan-200">
+            <MonitorSmartphone size={18} />
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-black text-white">{auditDeviceSummary(session.user_agent)}</h3>
+              <span className={session.is_current ? "kombai-chip kombai-chip-green" : "kombai-chip"}>{session.is_current ? "Sessao atual" : "Ativa"}</span>
+            </div>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Ultima atividade {formatDateTime(session.last_seen_at ?? session.created_at)} - expira {formatDateTime(session.expires_at)}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] xl:min-w-[440px]">
+          <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">IP registrado</p>
+            <p className="mt-1 break-all font-mono font-black text-white">{session.ip_address ?? "Nao registrado"}</p>
+          </div>
+          {session.is_current ? (
+            <button type="button" className="kombai-btn min-h-12" disabled>
+              <ShieldCheck size={16} />
+              Protegida
+            </button>
+          ) : (
+            <button type="button" className="kombai-btn min-h-12" onClick={onRevoke} disabled={isRevoking || isRevokingOtherSessions}>
+              <LogOut size={16} />
+              {isRevoking ? "Encerrando..." : "Encerrar"}
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function SecurityEventRow({ event }: { event: SecurityAuditEvent }) {
   const Icon = auditEventIcon(event);
   const detail = auditEventDetail(event);
@@ -603,7 +812,7 @@ function SecurityEventRow({ event }: { event: SecurityAuditEvent }) {
               <span className={auditStatusClass(event.status)}>{auditStatusLabel(event.status)}</span>
             </div>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              {formatDateTime(event.created_at)} · {auditDeviceSummary(event.user_agent)}
+              {formatDateTime(event.created_at)} - {auditDeviceSummary(event.user_agent)}
             </p>
           </div>
         </div>
@@ -652,7 +861,7 @@ function PlansTab({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-xl font-black text-white">Plano atual</h2>
-            <p className="mt-1 text-sm text-slate-500">{planName(currentPlan)} · {subscription?.is_active ? friendlyStatus(subscription.status) : "Conta gratuita"}</p>
+            <p className="mt-1 text-sm text-slate-500">{planName(currentPlan)} - {subscription?.is_active ? friendlyStatus(subscription.status) : "Conta gratuita"}</p>
           </div>
           {subscription?.portal_enabled && (
             <button type="button" className="kombai-btn" onClick={onPortal} disabled={isPortalLoading}>
@@ -921,6 +1130,9 @@ function auditEventIcon(event: SecurityAuditEvent): ComponentType<{ size?: numbe
   if (event.status === "blocked" || event.status === "failure") {
     return ShieldAlert;
   }
+  if (event.event_type === "auth.session_revoke" || event.event_type === "auth.sessions_revoked") {
+    return MonitorSmartphone;
+  }
   if (event.event_type === "auth.logout") {
     return LogOut;
   }
@@ -952,6 +1164,15 @@ function auditEventTitle(event: SecurityAuditEvent) {
   }
   if (event.event_type === "auth.logout") {
     return "Tentativa de logout";
+  }
+  if (event.event_type === "auth.session_revoke" && event.status === "success") {
+    return "Sessao encerrada";
+  }
+  if (event.event_type === "auth.session_revoke" && event.status === "blocked") {
+    return "Revogacao bloqueada";
+  }
+  if (event.event_type === "auth.sessions_revoked") {
+    return "Sessoes antigas encerradas";
   }
   return "Evento de seguranca";
 }
@@ -1000,6 +1221,7 @@ function auditDeviceSummary(userAgent?: string | null) {
 function auditEventDetail(event: SecurityAuditEvent) {
   const reason = auditDetailValue(event.details, "reason");
   const sessionId = auditDetailValue(event.details, "session_id");
+  const revokedCount = auditDetailValue(event.details, "revoked_count");
   const parts: string[] = [];
 
   if (reason) {
@@ -1008,8 +1230,11 @@ function auditEventDetail(event: SecurityAuditEvent) {
   if (sessionId) {
     parts.push(`Sessao: ${sessionId}`);
   }
+  if (revokedCount) {
+    parts.push(`Sessoes encerradas: ${revokedCount}`);
+  }
 
-  return parts.join(" · ");
+  return parts.join(" - ");
 }
 
 function auditDetailValue(details: Record<string, unknown>, key: string) {
