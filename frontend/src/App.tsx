@@ -1,25 +1,27 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { AlertTriangle, Loader2 } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
 import { Sidebar, type PageKey } from "./components/layout/Sidebar";
-import { AccountPage } from "./pages/AccountPage";
-import { Dashboard } from "./pages/Dashboard";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
-import { RecommendationProfile } from "./pages/RecommendationProfile";
-import { RecommendationHistoryPage } from "./pages/RecommendationHistory";
-import { RecommendationResults } from "./pages/RecommendationResults";
-import { ProductDetail } from "./pages/ProductDetail";
-import { ProfitSimulator } from "./pages/ProfitSimulator";
-import { SubscriptionPage } from "./pages/SubscriptionPage";
-import { AILab } from "./pages/AILab";
 import { AUTH_REQUIRED_EVENT, getApiErrorDetail, isPlanLimitError, isUnauthorizedError } from "./services/api";
+import { hasStoredAuthSession } from "./services/authToken";
 import { useAuth } from "./hooks/useAuth";
 import { useRecommendations } from "./hooks/useRecommendations";
 import type { RecommendationItem, RecommendationQuotaError } from "./types/recommendation";
 import { defaultProfile, type UserProfile } from "./types/userProfile";
+
+const AccountPage = lazy(() => import("./pages/AccountPage").then((module) => ({ default: module.AccountPage })));
+const Dashboard = lazy(() => import("./pages/Dashboard").then((module) => ({ default: module.Dashboard })));
+const RecommendationProfile = lazy(() => import("./pages/RecommendationProfile").then((module) => ({ default: module.RecommendationProfile })));
+const RecommendationHistoryPage = lazy(() => import("./pages/RecommendationHistory").then((module) => ({ default: module.RecommendationHistoryPage })));
+const RecommendationResults = lazy(() => import("./pages/RecommendationResults").then((module) => ({ default: module.RecommendationResults })));
+const ProductDetail = lazy(() => import("./pages/ProductDetail").then((module) => ({ default: module.ProductDetail })));
+const ProfitSimulator = lazy(() => import("./pages/ProfitSimulator").then((module) => ({ default: module.ProfitSimulator })));
+const SubscriptionPage = lazy(() => import("./pages/SubscriptionPage").then((module) => ({ default: module.SubscriptionPage })));
+const AILab = lazy(() => import("./pages/AILab").then((module) => ({ default: module.AILab })));
 
 const protectedPages = new Set<PageKey>(["dashboard", "account", "profile", "results", "history", "product", "profit", "billing", "ai"]);
 const restorablePages = new Set<PageKey>(["dashboard", "account", "profile", "history", "profit", "billing", "ai"]);
@@ -31,7 +33,7 @@ function readInitialPage(): PageKey {
   }
 
   const storedPage = window.localStorage.getItem(activePageStorageKey) as PageKey | null;
-  return storedPage && restorablePages.has(storedPage) ? storedPage : "landing";
+  return storedPage && restorablePages.has(storedPage) && hasStoredAuthSession() ? storedPage : "landing";
 }
 
 function storeActivePage(page: PageKey) {
@@ -85,6 +87,19 @@ function detailString(detail: Record<string, unknown> | null, key: string) {
 function detailNumber(detail: Record<string, unknown> | null, key: string) {
   const value = detail?.[key];
   return typeof value === "number" ? value : null;
+}
+
+function PageLoader({ label = "Carregando..." }: { label?: string }) {
+  return (
+    <div className="flex min-h-[70vh] items-center justify-center px-6">
+      <div className="kombai-card p-6 text-center">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg border border-cyan-300/25 bg-cyan-300/10 text-cyan-200">
+          <Loader2 size={22} className="animate-spin" />
+        </span>
+        <p className="mt-4 text-sm font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -274,6 +289,7 @@ export default function App() {
   const isPublicPage = activePage === "landing" || activePage === "login";
   const isCompactShell = activePage === "profit" || activePage === "ai";
   const shouldShowRecommendationError = Boolean(error && !isUnauthorizedError(rawRecommendationError) && !recommendationQuotaError);
+  const shouldHoldProtectedPage = protectedPages.has(activePage) && (isAuthLoading || !isAuthenticated);
 
   return (
     <div className={isPublicPage ? "min-h-screen bg-[#07090d] text-white" : "kombai-shell min-h-screen text-white"}>
@@ -315,7 +331,9 @@ export default function App() {
             transition={{ duration: 0.25 }}
             className={isPublicPage ? "min-h-screen" : undefined}
           >
-            {page}
+            <Suspense fallback={<PageLoader />}>
+              {shouldHoldProtectedPage ? <PageLoader label="Validando sessao..." /> : page}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>

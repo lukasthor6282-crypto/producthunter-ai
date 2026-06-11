@@ -14,6 +14,7 @@ import type { UserProfile } from "../types/userProfile";
 export function generateRecommendations(profile: UserProfile, limit = 8) {
   return apiRequest<RecommendationResponse>("/recommendations/generate", {
     method: "POST",
+    timeoutMs: 30_000,
     body: JSON.stringify({ ...profile, limit }),
   });
 }
@@ -40,10 +41,11 @@ export function simulateProfit(input: ProfitSimulationInput) {
 export function predictML(profile: UserProfile, productId?: number) {
   return apiRequest<MLPrediction>("/ml/predict", {
     method: "POST",
+    timeoutMs: 25_000,
     body: JSON.stringify({ profile, product_id: productId }),
   });
 }
 
 export function explainML() {
-  return apiRequest<MLExplanation>("/ml/explain");
+  return apiRequest<MLExplanation>("/ml/explain", { timeoutMs: 20_000 });
 }

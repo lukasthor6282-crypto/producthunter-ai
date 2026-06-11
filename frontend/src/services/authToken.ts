@@ -42,6 +42,10 @@ export function getStoredAuthToken() {
   return stored.accessToken;
 }
 
+export function hasStoredAuthSession() {
+  return Boolean(getStoredAuthToken());
+}
+
 export function storeAuthSession(session: AuthSession | null) {
   if (!isBrowser()) return;
 

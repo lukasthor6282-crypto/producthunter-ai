@@ -1,6 +1,9 @@
+from threading import Thread
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api import (
@@ -14,6 +17,7 @@ from app.api import (
 )
 from app.core.config import get_settings
 from app.core.security import request_size_limit_middleware, security_headers_middleware
+from app.data_providers.product_provider import get_provider
 from app.db_migrations import run_startup_migrations
 from app.utils.constants import (
     EXPERIENCE_LEVELS,
@@ -33,6 +37,7 @@ app = FastAPI(
 
 settings = get_settings()
 
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -47,6 +52,11 @@ app.middleware("http")(security_headers_middleware)
 @app.on_event("startup")
 def startup() -> None:
     run_startup_migrations()
+    Thread(target=warm_product_catalog, daemon=True).start()
+
+
+def warm_product_catalog() -> None:
+    get_provider().list_products()
 
 
 @app.exception_handler(RequestValidationError)

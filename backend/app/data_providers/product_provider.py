@@ -19,6 +19,9 @@ DUMMYJSON_URL = "https://dummyjson.com/products"
 MERCADO_LIVRE_SEARCH_URL = "https://api.mercadolibre.com/sites/MLB/search"
 BRL_PER_USD = 5.2
 MIN_PRODUCTS_PER_SEGMENT = 4
+CATALOG_REQUEST_TIMEOUT_SECONDS = 2.5
+MERCADO_LIVRE_REQUEST_TIMEOUT_SECONDS = 2.0
+MERCADO_LIVRE_MAX_QUERIES = 6
 
 MARKETPLACE_BY_INDEX = [marketplace["value"] for marketplace in MARKETPLACES]
 MARKETPLACE_LABELS = {marketplace["value"]: marketplace["label"] for marketplace in MARKETPLACES}
@@ -126,12 +129,19 @@ class HybridProductProvider:
 
     def _fetch_products(self) -> list[Product]:
         source = self._settings.product_source
-        if source in {"auto", "mercado_livre"}:
+
+        if source in {"auto", "dummyjson", "catalog"}:
+            catalog_products = self._fetch_dummyjson_products()
+            if catalog_products:
+                return self._ensure_catalog_coverage(catalog_products)
+
+        if source == "mercado_livre":
             mercado_livre_products = self._fetch_mercado_livre_products()
             if mercado_livre_products:
                 return self._ensure_catalog_coverage(mercado_livre_products)
 
-        if source in {"auto", "dummyjson", "catalog"}:
+            # If Mercado Livre is unavailable, keep the API responsive with the
+            # lightweight catalog before falling back to simulated coverage.
             catalog_products = self._fetch_dummyjson_products()
             if catalog_products:
                 return self._ensure_catalog_coverage(catalog_products)
@@ -149,15 +159,19 @@ class HybridProductProvider:
             "Accept": "application/json",
             "User-Agent": "ProductHunterAI/1.0",
         }
+        attempted_queries = 0
 
         for niche, queries in NICHE_SEARCH_QUERIES.items():
             for query in queries[:2]:
+                if attempted_queries >= MERCADO_LIVRE_MAX_QUERIES:
+                    return _dedupe_products(products)
+                attempted_queries += 1
                 try:
                     response = requests.get(
                         MERCADO_LIVRE_SEARCH_URL,
                         params={"q": query, "limit": 8},
                         headers=headers,
-                        timeout=10,
+                        timeout=MERCADO_LIVRE_REQUEST_TIMEOUT_SECONDS,
                     )
                     response.raise_for_status()
                 except requests.RequestException:
@@ -172,7 +186,10 @@ class HybridProductProvider:
 
     def _fetch_dummyjson_products(self) -> list[Product]:
         try:
-            response = requests.get(f"{DUMMYJSON_URL}?{urlencode({'limit': 194})}", timeout=10)
+            response = requests.get(
+                f"{DUMMYJSON_URL}?{urlencode({'limit': 194})}",
+                timeout=CATALOG_REQUEST_TIMEOUT_SECONDS,
+            )
             response.raise_for_status()
         except requests.RequestException:
             return []

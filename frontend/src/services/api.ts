@@ -1,6 +1,11 @@
 import { clearStoredAuthSession, getStoredAuthToken } from "./authToken";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+const DEFAULT_REQUEST_TIMEOUT_MS = 12_000;
+
+type ApiRequestInit = RequestInit & {
+  timeoutMs?: number;
+};
 
 export class ApiError extends Error {
   status: number;
@@ -74,7 +79,8 @@ export function isPlanLimitError(error: unknown): error is ApiError {
   );
 }
 
-export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiRequest<T>(path: string, init?: ApiRequestInit): Promise<T> {
+  const { timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS, signal, ...requestInit } = init ?? {};
   const headers = new Headers(init?.headers);
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -85,11 +91,32 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
     headers.set("Authorization", `Bearer ${storedAuthToken}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers,
-  });
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort();
+    } else {
+      signal.addEventListener("abort", () => controller.abort(), { once: true });
+    }
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...requestInit,
+      credentials: "include",
+      headers,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new ApiError(408, "Tempo limite ao conectar com o backend. Tente novamente em alguns segundos.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const body = await response.text();
