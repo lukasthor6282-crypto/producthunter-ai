@@ -1,15 +1,24 @@
 import {
+  Activity,
   ArrowRight,
   BarChart3,
   BrainCircuit,
   CircleDollarSign,
+  Cpu,
+  Database,
   FlaskConical,
   LineChart,
   LogIn,
   LogOut,
+  Menu,
+  MousePointer2,
+  Package,
   Play,
+  Radar,
+  Route,
   Search,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Store,
   Target,
@@ -19,6 +28,7 @@ import {
   Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { OpportunityRadar } from "../components/dashboard/OpportunityRadar";
@@ -108,6 +118,8 @@ const stats = [
   { value: "ML", label: "modelo preparado" },
 ] as const;
 
+const SPOTLIGHT_R = 260;
+
 function scrollToSection(id: string) {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   document.getElementById(id)?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
@@ -117,124 +129,17 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
   return (
     <div className="landing-root relative min-h-screen overflow-hidden bg-[#05070b] text-white">
       <div className="landing-dot-grid" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[820px] bg-[radial-gradient(circle_at_50%_0%,rgba(103,232,249,0.16),transparent_42rem)]" />
-
-      <header className="relative z-20 border-b border-white/[0.08] bg-[#05070b]/78 backdrop-blur-2xl">
-        <nav className="mx-auto flex h-[68px] max-w-[1280px] items-center justify-between px-5 md:px-8">
-          <button className="group flex items-center gap-3" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <BrandMark />
-            <span className="font-display text-base font-bold text-white">ProductHunter</span>
-          </button>
-
-          <div className="hidden items-center gap-7 lg:flex">
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                className="text-sm font-semibold text-white/58 transition hover:text-white"
-                onClick={() => scrollToSection(link.id)}
-              >
-                {link.label}
-              </button>
-            ))}
-          </div>
-
-          {user ? (
-            <div className="flex items-center gap-2">
-              <button className="landing-nav-cta hidden items-center gap-2 md:inline-flex" onClick={() => onNavigate("dashboard")}>
-                <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white/[0.12]">
-                  {user.picture_url ? (
-                    <img src={user.picture_url} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
-                  ) : (
-                    <UserCircle2 size={15} />
-                  )}
-                </span>
-                Abrir app
-              </button>
-              <button
-                type="button"
-                onClick={onLogout}
-                disabled={isLoggingOut}
-                aria-label="Sair"
-                className="hidden h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] text-white/64 transition hover:border-ember/30 hover:bg-ember/10 hover:text-ember disabled:opacity-50 md:inline-flex"
-              >
-                <LogOut size={16} />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <button
-                className="hidden h-11 items-center gap-2 rounded-full border border-white/10 bg-white/[0.055] px-4 text-sm font-bold text-white/68 transition hover:border-electric/30 hover:text-white md:inline-flex"
-                onClick={onLogin}
-              >
-                <LogIn size={15} />
-                Entrar
-              </button>
-              <button className="landing-nav-cta hidden items-center gap-2 md:inline-flex" onClick={onStart}>
-                <Sparkles size={15} />
-                Comecar gratis
-              </button>
-            </div>
-          )}
-        </nav>
-      </header>
+      <LandingNav
+        user={user}
+        onStart={onStart}
+        onNavigate={onNavigate}
+        onLogin={onLogin}
+        onLogout={onLogout}
+        isLoggingOut={isLoggingOut}
+      />
 
       <main className="relative z-10">
-        <section className="relative mx-auto flex min-h-[760px] max-w-[1280px] flex-col items-center px-5 pb-12 pt-10 text-center sm:pt-14 lg:min-h-[930px] lg:pt-[78px]">
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: "easeOut" }}
-            className="landing-pill"
-          >
-            <Sparkles size={15} />
-            Radar de decisao para vendedores e afiliados
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 22 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08, duration: 0.65, ease: "easeOut" }}
-            className="font-display mt-4 max-w-[1060px] text-[2.45rem] font-bold leading-[1.02] text-white sm:text-5xl md:text-6xl lg:text-[72px] xl:text-[78px]"
-          >
-            Descubra quais produtos vender com base no seu{" "}
-            <span className="landing-text-gradient">nicho, verba e objetivo.</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.16, duration: 0.55, ease: "easeOut" }}
-            className="mt-5 max-w-[760px] text-base leading-7 text-white/62 md:text-xl md:leading-8"
-          >
-            O ProductHunter AI analisa seu perfil de vendedor e entrega um ranking de oportunidades com score,
-            margem, risco e estrategia de venda.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.24, duration: 0.5, ease: "easeOut" }}
-            className="mt-8 flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row"
-          >
-            <button className="landing-primary-btn" onClick={onStart}>
-              <Sparkles size={17} />
-              Fazer minha analise gratis
-            </button>
-            <button className="landing-secondary-btn" onClick={() => scrollToSection("demo")}>
-              <Play size={17} />
-              Ver exemplo de ranking
-            </button>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 38, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.34, duration: 0.75, ease: "easeOut" }}
-            className="landing-mockup-float mt-10 w-full max-w-[940px] md:mt-16"
-          >
-            <DashboardMockup />
-          </motion.div>
-        </section>
+        <SpotlightSaasHero onStart={onStart} onNavigate={onNavigate} />
 
         <section id="how" className="relative mx-auto max-w-[1180px] px-5 py-20 md:py-24">
           <div className="mx-auto max-w-3xl text-center">
@@ -422,12 +327,323 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
   );
 }
 
+function LandingNav({ user, onStart, onNavigate, onLogin, onLogout, isLoggingOut }: LandingPageProps) {
+  return (
+    <nav className="fixed left-0 right-0 top-0 z-[100] flex items-center justify-between p-4 sm:p-5">
+      <button className="group flex items-center gap-3" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+        <BrandMark />
+        <span className="font-display text-lg font-bold text-white sm:text-xl">ProductHunter</span>
+      </button>
+
+      <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2 py-2 shadow-[0_18px_70px_rgba(0,0,0,0.32)] backdrop-blur-md md:flex">
+        {navLinks.map((link, index) => (
+          <button
+            key={link.id}
+            className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+              index === 0 ? "bg-white text-gray-950" : "text-white/[0.76] hover:bg-white/[0.14] hover:text-white"
+            }`}
+            onClick={() => scrollToSection(link.id)}
+          >
+            {link.label}
+          </button>
+        ))}
+      </div>
+
+      {user ? (
+        <div className="flex items-center gap-2">
+          <button
+            className="hidden items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-gray-950 shadow-[0_12px_40px_rgba(255,255,255,0.12)] transition hover:bg-gray-100 md:inline-flex"
+            onClick={() => onNavigate("dashboard")}
+          >
+            <span className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-gray-950/8">
+              {user.picture_url ? (
+                <img src={user.picture_url} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <UserCircle2 size={15} />
+              )}
+            </span>
+            Abrir app
+          </button>
+          <button
+            type="button"
+            onClick={onLogout}
+            disabled={isLoggingOut}
+            aria-label="Sair"
+            className="hidden h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white/76 transition hover:border-ember/40 hover:bg-ember/10 hover:text-ember disabled:opacity-50 md:inline-flex"
+          >
+            <LogOut size={16} />
+          </button>
+          <button
+            type="button"
+            aria-label="Abrir menu"
+            onClick={() => onNavigate("dashboard")}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md md:hidden"
+          >
+            <Menu size={18} />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <button
+            className="hidden rounded-full border border-white/[0.16] bg-white/10 px-5 py-2.5 text-sm font-bold text-white/[0.82] backdrop-blur-md transition hover:bg-white/[0.16] hover:text-white md:inline-flex"
+            onClick={onLogin}
+          >
+            <LogIn className="mr-2" size={15} />
+            Entrar
+          </button>
+          <button
+            className="hidden rounded-full bg-white px-6 py-2.5 text-sm font-bold text-gray-950 shadow-[0_12px_40px_rgba(255,255,255,0.12)] transition hover:bg-gray-100 md:inline-flex"
+            onClick={onStart}
+          >
+            Comecar gratis
+          </button>
+          <button
+            type="button"
+            aria-label="Abrir menu"
+            onClick={() => scrollToSection("how")}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md md:hidden"
+          >
+            <Menu size={18} />
+          </button>
+        </div>
+      )}
+    </nav>
+  );
+}
+
+function SpotlightSaasHero({ onStart, onNavigate }: Pick<LandingPageProps, "onStart" | "onNavigate">) {
+  const cursor = useSmoothedSpotlight();
+
+  return (
+    <section className="landing-spotlight-hero relative h-screen w-full overflow-hidden bg-black" style={{ height: "100dvh" }}>
+      <div className="absolute inset-0 z-10 hero-zoom">
+        <SaasHeroScene />
+      </div>
+
+      <SpotlightRevealLayer cursorX={cursor.x} cursorY={cursor.y}>
+        <SaasHeroScene revealed />
+      </SpotlightRevealLayer>
+
+      <div className="pointer-events-none absolute left-0 right-0 top-[14%] z-50 flex flex-col items-center px-5 text-center">
+        <h1 className="max-w-[1120px] text-white">
+          <span
+            className="hero-anim hero-reveal block font-display text-5xl font-bold leading-[0.95] sm:text-7xl md:text-8xl"
+            style={{ animationDelay: "0.25s", letterSpacing: "-0.04em" }}
+          >
+            Produtos certos
+          </span>
+          {" "}
+          <span
+            className="hero-anim hero-reveal mt-1 block font-display text-5xl font-normal leading-[0.95] text-white/92 sm:text-7xl md:text-8xl"
+            style={{ animationDelay: "0.42s", letterSpacing: "-0.06em" }}
+          >
+            no momento certo
+          </span>
+        </h1>
+      </div>
+
+      <div
+        className="hero-anim hero-fade pointer-events-none absolute bottom-14 left-10 z-50 hidden max-w-[280px] sm:block md:left-14"
+        style={{ animationDelay: "0.7s" }}
+      >
+        <p className="text-sm leading-relaxed text-white/80">
+          Leia nicho, verba, marketplace e risco como camadas de decisao antes de investir em estoque,
+          anuncios ou afiliacao.
+        </p>
+      </div>
+
+      <div
+        className="hero-anim hero-fade absolute bottom-8 left-5 right-5 z-50 flex max-w-full flex-col items-start gap-4 sm:bottom-8 sm:left-auto sm:right-10 sm:max-w-[280px] md:right-14"
+        style={{ animationDelay: "0.85s" }}
+      >
+        <p className="text-xs leading-relaxed text-white/80 sm:text-sm">
+          A camada revelada mostra o que a IA enxerga: aderencia ao perfil, margem estimada, risco e proxima acao.
+        </p>
+        <div className="flex w-full flex-col gap-3 sm:w-auto">
+          <button
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#67e8f9] px-7 py-3 text-sm font-bold text-[#041016] shadow-lg shadow-cyan-300/24 transition-all hover:scale-[1.03] hover:bg-[#5ef2b0] active:scale-95"
+            onClick={onStart}
+          >
+            <Sparkles size={16} />
+            Fazer analise gratis
+          </button>
+          <button
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.18] bg-white/10 px-7 py-3 text-sm font-bold text-white/[0.86] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white/[0.16] active:scale-95 sm:hidden"
+            onClick={() => onNavigate("dashboard")}
+          >
+            Abrir dashboard
+            <ArrowRight size={16} />
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function useSmoothedSpotlight() {
+  const mouse = useRef({ x: -999, y: -999 });
+  const smooth = useRef({ x: -999, y: -999 });
+  const rafRef = useRef<number | null>(null);
+  const [cursorPos, setCursorPos] = useState({ x: -999, y: -999 });
+
+  useEffect(() => {
+    const initial = {
+      x: window.innerWidth * 0.58,
+      y: window.innerHeight * 0.58,
+    };
+    mouse.current = initial;
+    smooth.current = initial;
+    setCursorPos(initial);
+
+    const onPointerMove = (event: PointerEvent) => {
+      mouse.current = { x: event.clientX, y: event.clientY };
+    };
+
+    const tick = () => {
+      smooth.current.x += (mouse.current.x - smooth.current.x) * 0.1;
+      smooth.current.y += (mouse.current.y - smooth.current.y) * 0.1;
+      setCursorPos({ x: smooth.current.x, y: smooth.current.y });
+      rafRef.current = window.requestAnimationFrame(tick);
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    rafRef.current = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      if (rafRef.current !== null) {
+        window.cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  return cursorPos;
+}
+
+function SpotlightRevealLayer({ cursorX, cursorY, children }: { cursorX: number; cursorY: number; children: ReactNode }) {
+  const maskImage = `radial-gradient(circle ${SPOTLIGHT_R}px at ${cursorX}px ${cursorY}px, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 40%, rgba(255,255,255,0.75) 60%, rgba(255,255,255,0.4) 75%, rgba(255,255,255,0.12) 88%, rgba(255,255,255,0) 100%)`;
+
+  return (
+    <div
+      className="spotlight-reveal-layer absolute inset-0 z-30 pointer-events-none"
+      style={{
+        WebkitMaskImage: maskImage,
+        maskImage,
+        WebkitMaskSize: "100% 100%",
+        maskSize: "100% 100%",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SaasHeroScene({ revealed = false }: { revealed?: boolean }) {
+  return (
+    <div className={`absolute inset-0 overflow-hidden ${revealed ? "saas-scene-revealed" : "saas-scene-base"}`}>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(103,232,249,0.12),transparent_24rem),linear-gradient(180deg,#03060a_0%,#071018_48%,#020305_100%)]" />
+      <div className="absolute inset-0 opacity-55 [background-image:linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:72px_72px]" />
+
+      <svg className="absolute inset-0 h-full w-full opacity-70" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id={revealed ? "heroLineReveal" : "heroLineBase"} x1="0" x2="1" y1="0" y2="1">
+            <stop stopColor={revealed ? "#5ef2b0" : "#67e8f9"} stopOpacity={revealed ? "0.52" : "0.2"} />
+            <stop offset="1" stopColor={revealed ? "#67e8f9" : "#ffffff"} stopOpacity={revealed ? "0.28" : "0.08"} />
+          </linearGradient>
+        </defs>
+        <path d="M132 610 C 322 426 510 540 688 376 S 1030 252 1304 372" fill="none" stroke={`url(#${revealed ? "heroLineReveal" : "heroLineBase"})`} strokeWidth="2" />
+        <path d="M188 268 C 424 382 456 160 706 276 S 1054 612 1256 490" fill="none" stroke={`url(#${revealed ? "heroLineReveal" : "heroLineBase"})`} strokeWidth="1.4" strokeDasharray="8 18" />
+        <path d="M300 740 C 518 640 710 744 878 558 S 1114 412 1340 610" fill="none" stroke={`url(#${revealed ? "heroLineReveal" : "heroLineBase"})`} strokeWidth="1.2" />
+      </svg>
+
+      <div className="absolute left-1/2 top-[60%] w-[min(780px,90vw)] -translate-x-1/2 -translate-y-1/2 sm:top-[67%] sm:w-[min(780px,86vw)]">
+        <div className={`saas-hero-panel ${revealed ? "saas-hero-panel-revealed" : ""}`}>
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${revealed ? "bg-emerald-300 text-[#041016]" : "bg-white/10 text-cyan-100"}`}>
+                {revealed ? <Cpu size={17} /> : <Radar size={17} />}
+              </span>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/42">Opportunity OS</p>
+                <p className="text-sm font-bold text-white">{revealed ? "Camada de IA ativa" : "Radar comercial"}</p>
+              </div>
+            </div>
+            <span className="rounded-full border border-white/[0.12] bg-white/[0.08] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-white/[0.62]">
+              Live
+            </span>
+          </div>
+
+          <div className="grid gap-3 p-4 md:grid-cols-[1fr_0.72fr]">
+            <div className="space-y-3">
+              {[
+                ["Suporte veicular magnetico", "96", "Automotivo"],
+                ["Aspirador veicular portatil", "88", "Automotivo"],
+                ["Kit organizador automotivo", "84", "Automotivo"],
+              ].map(([name, score, niche], index) => (
+                <div key={name} className="grid grid-cols-[34px_1fr_54px] items-center gap-3 rounded-lg border border-white/10 bg-white/[0.045] px-3 py-3">
+                  <span className="font-mono text-xs font-black text-white/34">0{index + 1}</span>
+                  <div>
+                    <p className="truncate text-sm font-bold text-white">{name}</p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/34">{niche}</p>
+                  </div>
+                  <span className={`rounded-full border px-2 py-1 text-center font-mono text-xs font-black ${revealed ? "border-emerald-300/30 bg-emerald-300/[0.12] text-emerald-200" : "border-cyan-300/20 bg-cyan-300/[0.08] text-cyan-100"}`}>
+                    {score}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden gap-3 md:grid">
+              <HeroMetricTile icon={<Database size={16} />} label="Match de nicho" value="98%" />
+              <HeroMetricTile icon={<Activity size={16} />} label="Margem" value="42%" />
+              <HeroMetricTile icon={<Route size={16} />} label="Proxima acao" value="Teste leve" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <SignalNode revealed={revealed} className="left-[8%] top-[34%]" icon={<ShoppingBag size={18} />} label="Shopee" value={revealed ? "+18% giro" : "marketplace"} />
+      <SignalNode revealed={revealed} className="right-[8%] top-[38%]" icon={<Package size={18} />} label="Produto" value={revealed ? "baixo risco" : "catalogo"} />
+      <SignalNode revealed={revealed} className="left-[16%] bottom-[18%]" icon={<TrendingUp size={18} />} label="Demanda" value={revealed ? "subindo" : "sinal"} />
+      <SignalNode revealed={revealed} className="right-[8%] bottom-[29%]" icon={<MousePointer2 size={18} />} label="Decisao" value={revealed ? "validar agora" : "perfil"} />
+    </div>
+  );
+}
+
+function SignalNode({ className, icon, label, value, revealed }: { className: string; icon: ReactNode; label: string; value: string; revealed?: boolean }) {
+  return (
+    <div className={`saas-signal-node absolute hidden min-w-[154px] rounded-lg border px-4 py-3 text-left backdrop-blur-md sm:block ${className} ${revealed ? "saas-signal-node-revealed" : ""}`}>
+      <div className="flex items-center gap-3">
+        <span className={`flex h-9 w-9 items-center justify-center rounded-lg ${revealed ? "bg-emerald-300 text-[#041016]" : "bg-white/10 text-cyan-100"}`}>
+          {icon}
+        </span>
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-white/38">{label}</p>
+          <p className="mt-1 text-sm font-bold text-white">{value}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HeroMetricTile({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.045] p-4">
+      <div className="flex items-center gap-2 text-cyan-100">
+        {icon}
+        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-white/38">{label}</span>
+      </div>
+      <p className="mt-3 font-mono text-lg font-black text-white">{value}</p>
+    </div>
+  );
+}
+
 function DashboardMockup() {
   return (
     <div className="landing-mockup-shell overflow-hidden rounded-lg">
       <div className="flex h-11 items-center gap-2 border-b border-white/10 bg-white/[0.035] px-4">
         <span className="h-3 w-3 rounded-full bg-white/22" />
-        <span className="h-3 w-3 rounded-full bg-white/14" />
+        <span className="h-3 w-3 rounded-full bg-white/[0.14]" />
         <span className="h-3 w-3 rounded-full bg-white/10" />
         <div className="ml-5 h-1.5 flex-1 rounded-full bg-white/10" />
         <span className="hidden text-xs font-bold text-white/36 md:inline">ProductHunter</span>

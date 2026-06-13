@@ -723,6 +723,137 @@ button {
     rgba(255,255,255,0.035);
 }
 
+@keyframes heroReveal {
+  0% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(28px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroZoom {
+  0% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes saasSignalFloat {
+  from {
+    transform: translate3d(0, -4px, 0);
+  }
+  to {
+    transform: translate3d(0, 8px, 0);
+  }
+}
+
+.hero-anim {
+  opacity: 0;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-reveal {
+  animation-duration: 1.1s;
+  animation-name: heroReveal;
+}
+
+.hero-fade {
+  animation-duration: 1s;
+  animation-name: heroFadeUp;
+}
+
+.hero-zoom {
+  animation: heroZoom 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.landing-spotlight-hero {
+  isolation: isolate;
+}
+
+.landing-spotlight-hero::after {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.38), transparent 24%, transparent 62%, rgba(0, 0, 0, 0.74)),
+    radial-gradient(circle at 50% 20%, transparent 0, rgba(0, 0, 0, 0.22) 54%, rgba(0, 0, 0, 0.72) 100%);
+}
+
+.saas-scene-base {
+  filter: saturate(0.78) brightness(0.78);
+}
+
+.saas-scene-revealed {
+  filter: saturate(1.26) brightness(1.08);
+}
+
+.saas-hero-panel {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 18px;
+  background:
+    radial-gradient(520px 260px at 20% 0%, rgba(103, 232, 249, 0.1), transparent 72%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.035)),
+    rgba(10, 16, 24, 0.72);
+  box-shadow:
+    0 44px 150px rgba(0, 0, 0, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px) saturate(122%);
+}
+
+.saas-hero-panel-revealed {
+  border-color: rgba(94, 242, 176, 0.34);
+  background:
+    radial-gradient(580px 280px at 18% 0%, rgba(94, 242, 176, 0.22), transparent 72%),
+    radial-gradient(460px 220px at 92% 10%, rgba(103, 232, 249, 0.2), transparent 70%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)),
+    rgba(7, 24, 22, 0.84);
+  box-shadow:
+    0 0 74px rgba(94, 242, 176, 0.16),
+    0 42px 150px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.saas-signal-node {
+  border-color: rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.092), rgba(255, 255, 255, 0.03)),
+    rgba(8, 13, 20, 0.68);
+  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.32);
+  animation: saasSignalFloat 6s ease-in-out infinite alternate;
+}
+
+.saas-signal-node-revealed {
+  border-color: rgba(94, 242, 176, 0.32);
+  background:
+    radial-gradient(260px 120px at 16% 0%, rgba(94, 242, 176, 0.22), transparent 72%),
+    rgba(6, 26, 22, 0.78);
+  box-shadow:
+    0 0 48px rgba(94, 242, 176, 0.16),
+    0 22px 80px rgba(0, 0, 0, 0.32);
+}
+
 /* ProductHunter premium cockpit direction */
 .font-display,
 .landing-root h1,
@@ -925,6 +1056,13 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-anim,
+  .hero-zoom,
+  .saas-signal-node {
+    animation: none;
+    opacity: 1;
+  }
+
   .opportunity-radar-card::before {
     animation: none;
   }
