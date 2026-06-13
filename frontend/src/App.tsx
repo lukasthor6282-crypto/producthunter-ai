@@ -1,5 +1,3 @@
-import { GeographyShowcasePage } from "./pages/GeographyShowcasePage";
+import { ProductHunterApp } from "./ProductHunterApp";
 
-export default function App() {
-  return <GeographyShowcasePage />;
-}
+export default ProductHunterApp;
