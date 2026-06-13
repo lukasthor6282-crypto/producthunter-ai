@@ -72,7 +72,7 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
           aria-label="ProductHunter"
           className={cn("hidden items-center gap-3 rounded-lg transition hover:bg-white/[0.04] lg:flex", isCompact ? "justify-center p-0 lg:h-10" : "p-2")}
         >
-          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-200/25 bg-[linear-gradient(135deg,#f8fafc,#d9f99d_48%,#34d399)] text-[#07100d] shadow-[0_0_30px_rgba(52,211,153,0.22)]">
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-cyan-200/25 bg-[linear-gradient(135deg,#67e8f9,#5ef2b0)] text-[#05070b] shadow-[0_0_30px_rgba(103,232,249,0.22)]">
             <Store size={18} strokeWidth={2.4} />
             <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-[#07100d]/15 bg-white text-[#07100d] shadow-[0_4px_12px_rgba(0,0,0,0.18)]">
               <Search size={10} strokeWidth={3} />
@@ -80,8 +80,8 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
           </span>
           {!isCompact && (
             <span className="hidden text-left lg:block">
-              <span className="block text-sm font-black leading-tight text-white">ProductHunter</span>
-              <span className="block text-xs font-black leading-tight text-emerald-200">Commerce Radar</span>
+              <span className="font-display block text-sm font-bold leading-tight text-white">ProductHunter</span>
+              <span className="block text-xs font-black leading-tight text-cyan-200">Commerce Radar</span>
             </span>
           )}
         </button>
@@ -91,7 +91,7 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
         <nav className={cn("grid flex-1 grid-cols-4 gap-1 sm:grid-cols-7 lg:flex lg:flex-col", isCompact ? "lg:mt-7 lg:gap-3" : "lg:mt-5 lg:gap-2")}>
           {!isCompact && (
             <p className="hidden px-1 pb-3 text-[11px] font-black uppercase tracking-[0.22em] text-slate-500 lg:block">
-              Navegação
+              Navegacao
             </p>
           )}
           {navItems.map((item) => {
@@ -109,7 +109,7 @@ export function Sidebar({ activePage, onNavigate, mode = "wide", user, onLogout,
                   !item.key && "hidden lg:flex",
                   isCompact ? "justify-center" : "justify-center px-3 lg:justify-start lg:gap-3",
                   isActive
-                    ? "border border-cyan-300/28 bg-cyan-300/[0.12] text-cyan-200 shadow-[0_0_24px_rgba(98,230,255,0.12)]"
+                    ? "border border-cyan-300/28 bg-cyan-300/[0.12] text-cyan-200 shadow-[0_0_24px_rgba(103,232,249,0.12)]"
                     : "border border-transparent text-slate-400 hover:bg-white/[0.045] hover:text-white",
                 )}
               >

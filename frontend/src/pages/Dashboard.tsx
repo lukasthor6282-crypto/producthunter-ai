@@ -1,14 +1,10 @@
-import { Bell, Boxes, Flame, TrendingUp, Zap } from "lucide-react";
+import { Bell, Boxes, Flame, Target, TrendingUp, Zap } from "lucide-react";
 import { useMemo } from "react";
 import type { ReactNode } from "react";
 import {
   Area,
   AreaChart,
   CartesianGrid,
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
   ResponsiveContainer,
   Scatter,
   ScatterChart,
@@ -17,8 +13,9 @@ import {
   YAxis,
 } from "recharts";
 
-import { useProducts } from "../hooks/useProducts";
+import { OpportunityRadar } from "../components/dashboard/OpportunityRadar";
 import { ProductImage } from "../components/product/ProductImage";
+import { useProducts } from "../hooks/useProducts";
 import { percent } from "../services/format";
 import type { Product } from "../types/product";
 
@@ -27,30 +24,69 @@ const trendSeries = Array.from({ length: 30 }, (_, index) => ({
   tecnologia: 68 + index * 0.75 + Math.sin(index * 1.2) * 3,
   beleza: 55 + index * 1.12 + Math.sin(index * 1.35) * 2.5,
   casa: 50 + index * 0.82 + Math.sin(index * 1.4) * 2,
-  games: 61 + index * 0.78 + Math.sin(index * 1.18) * 2.7,
+  automotivo: 58 + index * 0.96 + Math.sin(index * 1.22) * 2.4,
 }));
 
-const radarData = [
-  { subject: "Volume", shopee: 88, amazon: 94, ml: 78 },
-  { subject: "Margem", shopee: 66, amazon: 58, ml: 72 },
-  { subject: "Concorrência", shopee: 48, amazon: 62, ml: 68 },
-  { subject: "Taxas", shopee: 74, amazon: 56, ml: 52 },
-  { subject: "Conversão", shopee: 82, amazon: 76, ml: 70 },
-];
-
 const fallbackProducts = [
-  { name: "Mini Impressora Térmica", marketplace_label: "Shopee", niche_label: "Tecnologia", trend_score: 87, average_price: 89, estimated_cost: 55, return_risk: 18 },
-  { name: "Suporte Magnético Gamer", marketplace_label: "Amazon", niche_label: "Tecnologia", trend_score: 82, average_price: 149, estimated_cost: 84, return_risk: 22 },
-  { name: "LED Strip RGB Smart", marketplace_label: "Shopee", niche_label: "Games", trend_score: 79, average_price: 79, estimated_cost: 51, return_risk: 36 },
-  { name: "Fone TWS X12", marketplace_label: "ML", niche_label: "Tecnologia", trend_score: 74, average_price: 119, estimated_cost: 84, return_risk: 42 },
-  { name: "Webcam Full HD 1080p", marketplace_label: "Amazon", niche_label: "Tecnologia", trend_score: 71, average_price: 169, estimated_cost: 113, return_risk: 33 },
+  {
+    name: "Suporte veicular magnetico",
+    marketplace_label: "Shopee",
+    niche_label: "Automotivo",
+    trend_score: 87,
+    average_price: 89,
+    estimated_cost: 55,
+    return_risk: 18,
+    image_url: null,
+  },
+  {
+    name: "Mini impressora termica",
+    marketplace_label: "Amazon",
+    niche_label: "Tecnologia",
+    trend_score: 82,
+    average_price: 149,
+    estimated_cost: 84,
+    return_risk: 22,
+    image_url: null,
+  },
+  {
+    name: "Organizador de porta-malas",
+    marketplace_label: "Mercado Livre",
+    niche_label: "Automotivo",
+    trend_score: 79,
+    average_price: 79,
+    estimated_cost: 51,
+    return_risk: 36,
+    image_url: null,
+  },
+  {
+    name: "Fone TWS X12",
+    marketplace_label: "Shopee",
+    niche_label: "Tecnologia",
+    trend_score: 74,
+    average_price: 119,
+    estimated_cost: 84,
+    return_risk: 42,
+    image_url: null,
+  },
+  {
+    name: "Aspirador automotivo compacto",
+    marketplace_label: "Amazon",
+    niche_label: "Automotivo",
+    trend_score: 71,
+    average_price: 169,
+    estimated_cost: 113,
+    return_risk: 33,
+    image_url: null,
+  },
 ] as const;
+
+type DashboardProduct = Product | (typeof fallbackProducts)[number];
 
 export function Dashboard() {
   const { products, isLoading } = useProducts(60);
 
-  const topProducts = useMemo(() => {
-    if (!products.length) return fallbackProducts;
+  const topProducts = useMemo<DashboardProduct[]>(() => {
+    if (!products.length) return [...fallbackProducts];
     return [...products].sort((a, b) => b.trend_score - a.trend_score).slice(0, 5);
   }, [products]);
 
@@ -69,18 +105,20 @@ export function Dashboard() {
         <div>
           <p className="text-sm font-semibold text-slate-500">
             ProductHunter <span className="mx-2 text-slate-700">/</span>
-            <span className="font-black text-white">Dashboard</span>
+            <span className="font-black text-white">Cockpit</span>
           </p>
-          <h1 className="mt-2 text-[1.7rem] font-black leading-tight tracking-[-0.01em] text-white md:text-3xl">Visão Geral do Mercado</h1>
+          <h1 className="font-display mt-2 text-[1.8rem] font-bold leading-tight text-white md:text-4xl">
+            Cockpit de Oportunidades
+          </h1>
         </div>
         <div className="hidden items-center gap-3 md:flex">
-          <span className="text-sm font-semibold text-slate-500">Sab, 31 Mai 2025</span>
+          <span className="text-sm font-semibold text-slate-500">Radar atualizado</span>
           <button className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/12 bg-white/[0.035] text-slate-400">
             <Bell size={17} />
           </button>
           <button className="kombai-btn">
             <Zap size={16} />
-            Nova Análise
+            Nova analise
           </button>
         </div>
       </header>
@@ -88,17 +126,17 @@ export function Dashboard() {
       <div className="space-y-6 py-7">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <DashboardStat icon={<Zap size={22} />} value="1,204" label="Oportunidades" detail="esta semana" badge="+12%" />
-          <DashboardStat icon={<ScoreOrb />} value="84/100" label="Score Médio" detail="Mercado global" badge="84" />
-          <DashboardStat icon={<TrendingUp size={22} />} value="42.5%" label="Melhor Margem Média" detail="nicho destaque" badge="Tecnologia" />
-          <DashboardStat icon={<Boxes size={22} />} value="3 Ativos" label="Nichos em Análise" detail="ML · Amazon · Shopee" badge="Ao vivo" />
+          <DashboardStat icon={<Target size={22} />} value="84/100" label="Score Medio" detail="radar global" badge="84" />
+          <DashboardStat icon={<TrendingUp size={22} />} value="42.5%" label="Melhor Margem" detail="nicho destaque" badge="Tech" />
+          <DashboardStat icon={<Boxes size={22} />} value="3 ativos" label="Nichos em analise" detail="ML, Amazon e Shopee" badge="Ao vivo" />
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[1.9fr_0.93fr]">
+        <div className="grid gap-4 xl:grid-cols-[1.35fr_0.85fr]">
           <section className="kombai-card p-5">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-black text-white">Tendência por Nicho</h2>
-                <p className="mt-1 text-sm text-slate-500">Evolução semanal dos principais nichos</p>
+                <h2 className="font-display text-xl font-bold text-white">Tendencia por nicho</h2>
+                <p className="mt-1 text-sm text-slate-500">Evolucao semanal dos principais mercados monitorados.</p>
               </div>
               <select className="kombai-input h-9 px-3 text-sm font-semibold text-slate-300">
                 <option>30 dias</option>
@@ -111,53 +149,46 @@ export function Dashboard() {
                 <AreaChart data={trendSeries} margin={{ left: -14, right: 8, top: 14, bottom: 0 }}>
                   <defs>
                     <linearGradient id="dashTrendFill" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#62e6ff" stopOpacity={0.22} />
-                      <stop offset="100%" stopColor="#62e6ff" stopOpacity={0.02} />
+                      <stop offset="0%" stopColor="#67e8f9" stopOpacity={0.24} />
+                      <stop offset="100%" stopColor="#67e8f9" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid stroke="rgba(255,255,255,0.07)" strokeDasharray="4 6" />
                   <XAxis dataKey="day" interval={4} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis domain={[40, 100]} tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: "rgba(12,15,20,0.96)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff" }} />
-                  <Area type="monotone" dataKey="tecnologia" stroke="#62e6ff" strokeWidth={3} fill="url(#dashTrendFill)" />
-                  <Area type="monotone" dataKey="beleza" stroke="#65f0b7" strokeWidth={2} fill="transparent" />
-                  <Area type="monotone" dataKey="casa" stroke="#f8b85c" strokeWidth={2} fill="transparent" />
-                  <Area type="monotone" dataKey="games" stroke="#8b5cf6" strokeWidth={2} fill="transparent" />
+                  <Tooltip contentStyle={{ background: "rgba(12,15,20,0.96)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#fff" }} />
+                  <Area type="monotone" dataKey="tecnologia" stroke="#67e8f9" strokeWidth={3} fill="url(#dashTrendFill)" />
+                  <Area type="monotone" dataKey="beleza" stroke="#5ef2b0" strokeWidth={2} fill="transparent" />
+                  <Area type="monotone" dataKey="casa" stroke="#f6b35b" strokeWidth={2} fill="transparent" />
+                  <Area type="monotone" dataKey="automotivo" stroke="#a78bfa" strokeWidth={2} fill="transparent" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </section>
 
-          <section className="kombai-card p-5">
-            <h2 className="text-lg font-black text-white">Comparação Marketplaces</h2>
-            <p className="mt-1 text-sm text-slate-500">Performance por plataforma</p>
-            <div className="mt-8 h-[300px] md:h-[360px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke="rgba(255,255,255,0.08)" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: "#64748b", fontSize: 11 }} />
-                  <Radar name="Shopee" dataKey="shopee" stroke="#65f0b7" fill="#65f0b7" fillOpacity={0.14} strokeWidth={3} />
-                  <Radar name="Amazon" dataKey="amazon" stroke="#62e6ff" fill="#62e6ff" fillOpacity={0.1} strokeWidth={3} />
-                  <Radar name="Mercado Livre" dataKey="ml" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.1} strokeWidth={3} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-5 flex flex-wrap justify-center gap-3 text-xs font-bold text-slate-500">
-              <span className="inline-flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-mint" />Shopee</span>
-              <span className="inline-flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-electric" />Amazon</span>
-              <span className="inline-flex items-center gap-2"><i className="h-3 w-3 rounded-full bg-violet" />Mercado Livre</span>
-            </div>
-          </section>
+          <OpportunityRadar
+            score={84}
+            title="Opportunity Radar"
+            subtitle="Compatibilidade entre nicho, verba, margem, demanda, risco e conversao."
+            signals={[
+              { label: "Nicho", value: 91, tone: "mint" },
+              { label: "Verba", value: 84, tone: "cyan" },
+              { label: "Margem", value: 78, tone: "mint" },
+              { label: "Demanda", value: 86, tone: "violet" },
+              { label: "Risco", value: 64, tone: "amber" },
+              { label: "Conversao", value: 73, tone: "cyan" },
+            ]}
+          />
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[1fr_1fr]">
           <section className="kombai-card p-5">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-black text-white">Top Oportunidades</h2>
+                <h2 className="font-display text-xl font-bold text-white">Top oportunidades</h2>
                 <p className="mt-1 text-sm text-slate-500">{isLoading ? "Carregando produtos..." : "Produtos com maior score agora"}</p>
               </div>
-              <button className="text-sm font-black text-cyan-200">Ver todos →</button>
+              <button className="text-sm font-black text-cyan-200">Ver todos</button>
             </div>
             <div className="space-y-3">
               {topProducts.map((product, index) => (
@@ -167,16 +198,16 @@ export function Dashboard() {
           </section>
 
           <section className="kombai-card p-5">
-            <h2 className="text-lg font-black text-white">Risco × Margem</h2>
-            <p className="mt-1 text-sm text-slate-500">Produtos no quadrante ideal: alta margem, baixo risco</p>
+            <h2 className="font-display text-xl font-bold text-white">Risco x Margem</h2>
+            <p className="mt-1 text-sm text-slate-500">O quadrante ideal fica em alta margem e baixo risco.</p>
             <div className="mt-5 h-[260px] md:h-[310px]">
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ left: -16, right: 18, top: 18, bottom: 0 }}>
                   <CartesianGrid stroke="rgba(255,255,255,0.07)" />
                   <XAxis type="number" dataKey="margin" name="Margem" unit="%" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis type="number" dataKey="risk" name="Risco" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip cursor={{ strokeDasharray: "3 3" }} contentStyle={{ background: "rgba(12,15,20,0.96)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, color: "#fff" }} />
-                  <Scatter data={scatterData} fill="#62e6ff" />
+                  <Tooltip cursor={{ strokeDasharray: "3 3" }} contentStyle={{ background: "rgba(12,15,20,0.96)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#fff" }} />
+                  <Scatter data={scatterData} fill="#67e8f9" />
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
@@ -185,13 +216,13 @@ export function Dashboard() {
 
         <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr_0.9fr]">
           <section className="kombai-card p-5">
-            <h2 className="text-lg font-black text-white">Nichos em Alta</h2>
+            <h2 className="font-display text-xl font-bold text-white">Nichos em alta</h2>
             <div className="mt-5 space-y-4">
               {[
                 ["Tecnologia", 92],
+                ["Automotivo", 88],
                 ["Beleza", 87],
                 ["Games", 83],
-                ["Pets", 79],
                 ["Casa", 74],
               ].map(([label, value]) => (
                 <div key={label} className="flex items-center justify-between">
@@ -204,30 +235,30 @@ export function Dashboard() {
 
           <section className="kombai-card p-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-black text-white">Alertas</h2>
+              <h2 className="font-display text-xl font-bold text-white">Alertas</h2>
               <span className="kombai-chip kombai-chip-orange">2 novos</span>
             </div>
             <div className="mt-5 space-y-3">
-              <AlertRow title="Alta concorrência em Fones Bluetooth" detail="Novas lojas entrando no nicho · 2h atras" />
-              <AlertRow title="Margem caindo em Capas de Celular" detail="-3.2% na ultima semana · 1d atras" />
-              <AlertRow title="Boa oportunidade em Impressoras Portáteis" detail="Demanda crescendo 28% · Agora" positive />
+              <AlertRow title="Alta concorrencia em fones Bluetooth" detail="Novas lojas entrando no nicho, 2h atras" />
+              <AlertRow title="Margem caindo em capas de celular" detail="-3.2% na ultima semana" />
+              <AlertRow title="Boa oportunidade em suportes veiculares" detail="Demanda crescendo 28% agora" positive />
             </div>
           </section>
 
           <section className="kombai-card kombai-card-green p-5">
-            <h2 className="text-lg font-black text-white">IA Score Global</h2>
-            <p className="mt-1 text-sm text-slate-500">Analise de hoje · Sao Paulo</p>
+            <h2 className="font-display text-xl font-bold text-white">IA Score Global</h2>
+            <p className="mt-1 text-sm text-slate-500">Analise de hoje</p>
             <div className="mt-8 flex items-end gap-2">
               <span className="font-mono text-6xl font-black text-white">78</span>
               <span className="pb-2 text-lg font-black text-slate-500">/100</span>
             </div>
             <p className="mt-5 text-sm leading-6 text-slate-400">
-              Mercado aquecido, concorrência moderada, boas margens em tech e beleza.
+              Mercado aquecido, concorrencia moderada e boas margens em tecnologia, automotivo e beleza.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
-              <span className="kombai-chip kombai-chip-green">Favorável</span>
-              <span className="kombai-chip kombai-chip-cyan">Tech ↑</span>
-              <span className="kombai-chip">Risco Médio</span>
+              <span className="kombai-chip kombai-chip-green">Favoravel</span>
+              <span className="kombai-chip kombai-chip-cyan">Tech alta</span>
+              <span className="kombai-chip">Risco medio</span>
             </div>
           </section>
         </div>
@@ -252,21 +283,13 @@ function DashboardStat({ icon, value, label, detail, badge }: { icon: ReactNode;
   );
 }
 
-function ScoreOrb() {
-  return (
-    <span className="relative flex h-11 w-11 items-center justify-center rounded-full border-[5px] border-cyan-300 text-xs font-black text-white shadow-[0_0_24px_rgba(98,230,255,0.5)]">
-      84
-    </span>
-  );
-}
-
-function OpportunityRow({ product, rank }: { product: Product | (typeof fallbackProducts)[number]; rank: number }) {
+function OpportunityRow({ product, rank }: { product: DashboardProduct; rank: number }) {
   const margin = product.average_price ? ((product.average_price - product.estimated_cost) / product.average_price) * 100 : 0;
   const score = Math.round(product.trend_score);
 
   return (
     <div className={rank === 1 ? "data-row-highlight p-4" : "data-row p-4"}>
-      <div className="grid items-center gap-4 md:grid-cols-[42px_1fr_72px_72px]">
+      <div className="grid items-center gap-4 md:grid-cols-[42px_58px_1fr_72px_72px]">
         <span className="font-mono text-sm font-black text-slate-600">#{rank}</span>
         <ProductImage product={product} className="h-14 w-14" />
         <div className="min-w-0">

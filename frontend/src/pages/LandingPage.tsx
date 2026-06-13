@@ -4,9 +4,9 @@ import {
   BrainCircuit,
   CircleDollarSign,
   FlaskConical,
+  LineChart,
   LogIn,
   LogOut,
-  LineChart,
   Play,
   Search,
   ShieldCheck,
@@ -21,6 +21,7 @@ import {
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
+import { OpportunityRadar } from "../components/dashboard/OpportunityRadar";
 import type { PageKey } from "../components/layout/Sidebar";
 import type { AuthUser } from "../types/auth";
 
@@ -35,39 +36,39 @@ type LandingPageProps = {
 
 const navLinks = [
   { label: "Produto", id: "how" },
-  { label: "Benefícios", id: "benefits" },
+  { label: "Beneficios", id: "benefits" },
   { label: "Exemplo", id: "demo" },
-  { label: "Começar", id: "cta" },
+  { label: "Comecar", id: "cta" },
 ] as const;
 
 const metrics = [
   { label: "Oportunidades", value: "1,204", detail: "+12% hoje", tone: "mint" },
-  { label: "Score Médio", value: "84/100", detail: "top categorias", tone: "electric" },
+  { label: "Score Medio", value: "84/100", detail: "top categorias", tone: "electric" },
   { label: "Melhor Margem", value: "42%", detail: "produto vencedor", tone: "ember" },
-  { label: "Conversão Est.", value: "3.8%", detail: "perfil atual", tone: "violet" },
+  { label: "Conversao Est.", value: "3.8%", detail: "perfil atual", tone: "violet" },
 ] as const;
 
 const topProducts = [
-  { name: "Mini impressora térmica", score: 87, tone: "mint" },
-  { name: "Suporte magnético", score: 79, tone: "electric" },
-  { name: "Luminária gamer RGB", score: 71, tone: "ember" },
+  { name: "Suporte veicular magnetico", score: 87, tone: "mint" },
+  { name: "Mini impressora termica", score: 79, tone: "electric" },
+  { name: "Kit organizador automotivo", score: 71, tone: "ember" },
 ] as const;
 
 const steps = [
   {
     icon: <Store size={22} />,
-    title: "Informe onde você vende",
-    text: "Marketplace, operação, nicho, investimento, experiência e tráfego entram como contexto comercial.",
+    title: "Informe o seu cenario",
+    text: "Marketplace, operacao, nicho, investimento, experiencia e trafego entram como contexto comercial.",
   },
   {
     icon: <BrainCircuit size={22} />,
-    title: "A IA calcula oportunidade",
-    text: "O backend cruza margem, concorrência, risco, conversão e aderência ao seu perfil.",
+    title: "A IA mede oportunidade",
+    text: "O backend cruza margem, concorrencia, risco, conversao, demanda e aderencia ao seu perfil.",
   },
   {
     icon: <Target size={22} />,
-    title: "Receba o ranking ideal",
-    text: "Veja produtos priorizados com score, lucro estimado, público-alvo e estratégia de venda.",
+    title: "Receba um ranking acionavel",
+    text: "Veja produtos priorizados com score, lucro estimado, publico-alvo e estrategia de venda.",
   },
 ] as const;
 
@@ -80,30 +81,30 @@ const benefits = [
   {
     icon: <CircleDollarSign size={20} />,
     title: "Margem explicada",
-    text: "Compare custo, frete, taxa, margem e lucro provável em uma decisão simples.",
+    text: "Compare custo, frete, taxa, margem e lucro provavel em uma decisao simples.",
   },
   {
     icon: <ShieldCheck size={20} />,
-    title: "Risco visível",
-    text: "Saturação, concorrência e complexidade operacional aparecem antes da aposta.",
+    title: "Risco visivel",
+    text: "Saturacao, concorrencia e complexidade operacional aparecem antes da aposta.",
   },
   {
     icon: <Users size={20} />,
     title: "Perfil do vendedor",
-    text: "Afiliado, revendedor, dropshipping e loja própria recebem pesos diferentes.",
+    text: "Afiliado, revendedor, dropshipping e loja propria recebem pesos diferentes.",
   },
 ] as const;
 
 const demoProducts = [
-  { product: "Organizador dobrável premium", score: 91, profit: "R$ 28,40", risk: "baixo" },
-  { product: "Massageador facial compacto", score: 86, profit: "R$ 34,10", risk: "médio" },
-  { product: "Kit cozinha antiaderente", score: 78, profit: "R$ 52,70", risk: "médio" },
+  { product: "Suporte veicular premium", score: 91, profit: "R$ 28,40", risk: "baixo" },
+  { product: "Organizador de porta-malas", score: 86, profit: "R$ 34,10", risk: "medio" },
+  { product: "Aspirador automotivo compacto", score: 78, profit: "R$ 52,70", risk: "medio" },
 ] as const;
 
 const stats = [
   { value: "12", label: "marketplaces simulados" },
   { value: "200+", label: "categorias analisaveis" },
-  { value: "100%", label: "decisão explicável" },
+  { value: "100%", label: "decisao explicavel" },
   { value: "ML", label: "modelo preparado" },
 ] as const;
 
@@ -114,30 +115,22 @@ function scrollToSection(id: string) {
 
 export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLoggingOut }: LandingPageProps) {
   return (
-    <div className="landing-root relative min-h-screen overflow-hidden bg-[#07090d] text-white">
+    <div className="landing-root relative min-h-screen overflow-hidden bg-[#05070b] text-white">
       <div className="landing-dot-grid" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[820px] bg-[radial-gradient(circle_at_50%_0%,rgba(86,111,255,0.2),transparent_42rem)]" />
-      <div className="landing-orb landing-orb-a" />
-      <div className="landing-orb landing-orb-b" />
-      <div className="landing-orb landing-orb-c" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[820px] bg-[radial-gradient(circle_at_50%_0%,rgba(103,232,249,0.16),transparent_42rem)]" />
 
-      <header className="relative z-20 border-b border-white/[0.08] bg-[#07090d]/72 backdrop-blur-2xl">
+      <header className="relative z-20 border-b border-white/[0.08] bg-[#05070b]/78 backdrop-blur-2xl">
         <nav className="mx-auto flex h-[68px] max-w-[1280px] items-center justify-between px-5 md:px-8">
           <button className="group flex items-center gap-3" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <span className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200/25 bg-[linear-gradient(135deg,#f8fafc,#d9f99d_48%,#34d399)] text-[#07100d] shadow-[0_0_34px_rgba(52,211,153,0.24)]">
-              <Store size={19} strokeWidth={2.4} />
-              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-[#07100d]/15 bg-white text-[#07100d] shadow-[0_4px_12px_rgba(0,0,0,0.18)]">
-                <Search size={10} strokeWidth={3} />
-              </span>
-            </span>
-            <span className="text-base font-extrabold text-white">ProductHunter</span>
+            <BrandMark />
+            <span className="font-display text-base font-bold text-white">ProductHunter</span>
           </button>
 
           <div className="hidden items-center gap-7 lg:flex">
             {navLinks.map((link) => (
               <button
                 key={link.id}
-                className="text-sm font-medium text-white/58 transition hover:text-white"
+                className="text-sm font-semibold text-white/58 transition hover:text-white"
                 onClick={() => scrollToSection(link.id)}
               >
                 {link.label}
@@ -178,7 +171,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
               </button>
               <button className="landing-nav-cta hidden items-center gap-2 md:inline-flex" onClick={onStart}>
                 <Sparkles size={15} />
-                Começar grátis
+                Comecar gratis
               </button>
             </div>
           )}
@@ -186,7 +179,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
       </header>
 
       <main className="relative z-10">
-        <section className="relative mx-auto flex min-h-[760px] max-w-[1280px] flex-col items-center px-5 pb-12 pt-10 text-center sm:pt-14 lg:min-h-[960px] lg:pt-[78px]">
+        <section className="relative mx-auto flex min-h-[760px] max-w-[1280px] flex-col items-center px-5 pb-12 pt-10 text-center sm:pt-14 lg:min-h-[930px] lg:pt-[78px]">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -194,27 +187,27 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
             className="landing-pill"
           >
             <Sparkles size={15} />
-            Inteligência de Mercado para Vendedores
+            Radar de decisao para vendedores e afiliados
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 22 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08, duration: 0.65, ease: "easeOut" }}
-            className="mt-4 max-w-[1040px] text-[2.25rem] font-black leading-[1.08] text-white sm:text-5xl md:text-6xl lg:text-[72px] xl:text-[76px]"
+            className="font-display mt-4 max-w-[1060px] text-[2.45rem] font-bold leading-[1.02] text-white sm:text-5xl md:text-6xl lg:text-[72px] xl:text-[78px]"
           >
-            A IA que encontra os melhores produtos para o seu perfil de{" "}
-            <span className="landing-text-gradient">venda.</span>
+            Descubra quais produtos vender com base no seu{" "}
+            <span className="landing-text-gradient">nicho, verba e objetivo.</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.16, duration: 0.55, ease: "easeOut" }}
-            className="mt-5 max-w-[700px] text-base leading-7 text-white/62 md:text-xl md:leading-8"
+            className="mt-5 max-w-[760px] text-base leading-7 text-white/62 md:text-xl md:leading-8"
           >
-            Informe onde você vende, seu nicho e objetivo. O ProductHunter recomenda produtos com maior chance de
-            lucro, conversão e oportunidade.
+            O ProductHunter AI analisa seu perfil de vendedor e entrega um ranking de oportunidades com score,
+            margem, risco e estrategia de venda.
           </motion.p>
 
           <motion.div
@@ -225,11 +218,11 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
           >
             <button className="landing-primary-btn" onClick={onStart}>
               <Sparkles size={17} />
-              Encontrar produtos
+              Fazer minha analise gratis
             </button>
             <button className="landing-secondary-btn" onClick={() => scrollToSection("demo")}>
               <Play size={17} />
-              Ver exemplo
+              Ver exemplo de ranking
             </button>
           </motion.div>
 
@@ -237,7 +230,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
             initial={{ opacity: 0, y: 38, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: 0.34, duration: 0.75, ease: "easeOut" }}
-            className="landing-mockup-float mt-10 w-full max-w-[840px] md:mt-16"
+            className="landing-mockup-float mt-10 w-full max-w-[940px] md:mt-16"
           >
             <DashboardMockup />
           </motion.div>
@@ -246,12 +239,12 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
         <section id="how" className="relative mx-auto max-w-[1180px] px-5 py-20 md:py-24">
           <div className="mx-auto max-w-3xl text-center">
             <p className="landing-section-label">Como funciona</p>
-            <h2 className="mt-4 text-3xl font-black leading-tight text-white md:text-5xl">
-              Três passos para encontrar seu próximo produto vencedor.
+            <h2 className="font-display mt-4 text-3xl font-bold leading-tight text-white md:text-5xl">
+              Um cockpit simples para decidir onde apostar.
             </h2>
             <p className="mt-5 text-base leading-7 text-white/58">
-              O fluxo permanece conectado ao backend atual. A landing apenas apresenta a decisão com mais clareza,
-              profundidade e confiança visual.
+              O fluxo usa o backend atual do ProductHunter, mas apresenta a decisao como uma ferramenta de analise:
+              contexto, score, risco e plano de acao.
             </p>
           </div>
 
@@ -269,7 +262,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
                   {step.icon}
                 </div>
                 <p className="mt-7 font-mono text-xs font-bold uppercase text-white/36">0{index + 1}</p>
-                <h3 className="mt-3 text-xl font-extrabold text-white">{step.title}</h3>
+                <h3 className="mt-3 text-xl font-bold text-white">{step.title}</h3>
                 <p className="mt-3 text-sm leading-6 text-white/56">{step.text}</p>
               </motion.article>
             ))}
@@ -284,16 +277,16 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
               viewport={{ once: true, amount: 0.25 }}
               className="landing-card landing-card-bright min-h-[420px] p-7 md:p-9"
             >
-              <p className="landing-section-label">Benefícios</p>
-              <h2 className="mt-5 max-w-2xl text-3xl font-black leading-tight text-white md:text-5xl">
+              <p className="landing-section-label">Beneficios</p>
+              <h2 className="font-display mt-5 max-w-2xl text-3xl font-bold leading-tight text-white md:text-5xl">
                 Pare de escolher produtos no achismo.
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-8 text-white/60">
-                O ProductHunter transforma uma pergunta simples em um painel de decisão: score, margem, risco,
-                conversão, estratégia e explicação da IA em um só lugar.
+                O ProductHunter transforma uma pergunta simples em um painel de decisao: score, margem, risco,
+                conversao, estrategia e explicacao da IA em um so lugar.
               </p>
               <div className="mt-9 grid gap-3 sm:grid-cols-2">
-                <MiniSignal icon={<LineChart size={18} />} label="Tendência" value="+18%" />
+                <MiniSignal icon={<LineChart size={18} />} label="Tendencia" value="+18%" />
                 <MiniSignal icon={<Zap size={18} />} label="Velocidade" value="2.4x" />
                 <MiniSignal icon={<FlaskConical size={18} />} label="Testes" value="Simulados" />
                 <MiniSignal icon={<BarChart3 size={18} />} label="Clareza" value="Score 0-100" />
@@ -315,7 +308,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
                       {benefit.icon}
                     </div>
                     <div>
-                      <h3 className="font-extrabold text-white">{benefit.title}</h3>
+                      <h3 className="font-bold text-white">{benefit.title}</h3>
                       <p className="mt-2 text-sm leading-6 text-white/55">{benefit.text}</p>
                     </div>
                   </div>
@@ -329,15 +322,15 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
           <div className="grid items-center gap-8 lg:grid-cols-[0.85fr_1.15fr]">
             <div>
               <p className="landing-section-label">Exemplo</p>
-              <h2 className="mt-5 text-3xl font-black leading-tight text-white md:text-5xl">Veja na prática.</h2>
+              <h2 className="font-display mt-5 text-3xl font-bold leading-tight text-white md:text-5xl">Veja na pratica.</h2>
               <p className="mt-5 text-base leading-8 text-white/60">
-                A tela de recomendação continua usando a API atual, mas agora chega com leitura de SaaS premium:
-                ranking claro, indicadores fortes e explicação pronta para decisão.
+                A tela de recomendacao combina ranking claro, indicadores fortes e explicacao pronta para decisao.
+                O usuario entende por que aquele produto faz sentido para o cenario dele.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <button className="landing-primary-btn" onClick={onStart}>
                   <Sparkles size={18} />
-                  Rodar análise demo
+                  Rodar analise demo
                 </button>
                 <button className="landing-secondary-btn" onClick={() => onNavigate("dashboard")}>
                   Abrir dashboard
@@ -356,7 +349,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
               <div className="flex flex-col gap-4 border-b border-white/10 pb-5 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-xs font-bold uppercase text-cyan-200/70">Ranking recomendado</p>
-                  <h3 className="mt-2 text-2xl font-black text-white">Casa e organização | Mercado Livre</h3>
+                  <h3 className="font-display mt-2 text-2xl font-bold text-white">Automotivo | Shopee | ate R$500</h3>
                 </div>
                 <div className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs font-bold text-emerald-200">
                   Alto potencial
@@ -396,16 +389,16 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
         <section id="cta" className="relative mx-auto max-w-[1180px] px-5 py-20 md:py-24">
           <div className="landing-card landing-card-bright overflow-hidden p-8 text-center md:p-12">
             <p className="landing-section-label">Comece agora</p>
-            <h2 className="mx-auto mt-5 max-w-3xl text-3xl font-black leading-tight text-white md:text-5xl">
+            <h2 className="font-display mx-auto mt-5 max-w-3xl text-3xl font-bold leading-tight text-white md:text-5xl">
               Descubra o produto vencedor para o seu perfil de venda.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-white/60">
-              Simule lucro, compare risco e encontre a melhor aposta antes de investir tempo, estoque ou tráfego.
+              Simule lucro, compare risco e encontre a melhor aposta antes de investir tempo, estoque ou trafego.
             </p>
             <div className="mt-8 flex justify-center">
               <button className="landing-primary-btn" onClick={onStart}>
                 <Sparkles size={18} />
-                Começar análise gratuita
+                Comecar analise gratuita
               </button>
             </div>
           </div>
@@ -415,18 +408,13 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
       <footer className="relative z-10 border-t border-white/[0.08] px-5 py-8">
         <div className="mx-auto flex max-w-[1180px] flex-col gap-5 text-sm text-white/46 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
-            <span className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-white text-[#07090d]">
-              <Store size={17} strokeWidth={2.4} />
-              <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-300 text-[#07100d]">
-                <Search size={9} strokeWidth={3} />
-              </span>
-            </span>
+            <BrandMark small />
             <span>ProductHunter</span>
           </div>
           <div className="flex flex-wrap gap-5">
             <button className="transition hover:text-white" onClick={() => onNavigate("account")}>Perfil</button>
             <button className="transition hover:text-white" onClick={() => onNavigate("profit")}>Simulador</button>
-            <button className="transition hover:text-white" onClick={() => onNavigate("ai")}>Laboratório de IA</button>
+            <button className="transition hover:text-white" onClick={() => onNavigate("ai")}>Laboratorio de IA</button>
           </div>
         </div>
       </footer>
@@ -436,7 +424,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
 
 function DashboardMockup() {
   return (
-    <div className="landing-mockup-shell overflow-hidden rounded-[22px]">
+    <div className="landing-mockup-shell overflow-hidden rounded-lg">
       <div className="flex h-11 items-center gap-2 border-b border-white/10 bg-white/[0.035] px-4">
         <span className="h-3 w-3 rounded-full bg-white/22" />
         <span className="h-3 w-3 rounded-full bg-white/14" />
@@ -445,9 +433,9 @@ function DashboardMockup() {
         <span className="hidden text-xs font-bold text-white/36 md:inline">ProductHunter</span>
       </div>
 
-      <div className="grid min-h-[398px] bg-[#15171a]/95 lg:grid-cols-[60px_1fr]">
+      <div className="grid min-h-[398px] bg-[#101720]/95 lg:grid-cols-[60px_1fr]">
         <aside className="hidden border-r border-white/10 px-3 py-5 lg:block">
-          <div className="relative mb-7 flex h-8 w-8 items-center justify-center rounded-lg bg-[#66f6e7] text-[#07090d]">
+          <div className="relative mb-7 flex h-8 w-8 items-center justify-center rounded-lg bg-[#67e8f9] text-[#05070b]">
             <Store size={15} strokeWidth={2.4} />
             <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white text-[#07100d]">
               <Search size={9} strokeWidth={3} />
@@ -476,7 +464,7 @@ function DashboardMockup() {
             ))}
           </div>
 
-          <div className="mt-5 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_0.92fr]">
             <div className="landing-metric-card p-5">
               <div className="mb-5 text-center">
                 <p className="text-xs font-black uppercase text-white/42">Top produtos</p>
@@ -502,30 +490,22 @@ function DashboardMockup() {
               </div>
             </div>
 
-            <div className="landing-metric-card p-5">
-              <div className="mb-4 text-center">
-                <p className="text-xs font-black uppercase text-white/42">Tendência do nicho</p>
-              </div>
-              <svg viewBox="0 0 260 190" className="h-[190px] w-full" role="img" aria-label="Gráfico de tendência">
-                <defs>
-                  <linearGradient id="trendStroke" x1="0" x2="1">
-                    <stop offset="0%" stopColor="#62e6ff" />
-                    <stop offset="100%" stopColor="#62e6ff" />
-                  </linearGradient>
-                  <linearGradient id="trendFill" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#62e6ff" stopOpacity="0.24" />
-                    <stop offset="100%" stopColor="#62e6ff" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d="M24 146 L72 130 L118 112 L150 120 L182 88 L214 74 L236 70 L250 60 L250 180 L24 180 Z" fill="url(#trendFill)" />
-                <path d="M24 146 L72 130 L118 112 L150 120 L182 88 L214 74 L236 70 L250 60" fill="none" stroke="url(#trendStroke)" strokeWidth="3" strokeLinecap="round" />
-                <circle cx="250" cy="60" r="4" fill="#62e6ff" />
-              </svg>
-            </div>
+            <OpportunityRadar compact score={84} subtitle="Leitura combinada de nicho, verba e risco." />
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function BrandMark({ small = false }: { small?: boolean }) {
+  return (
+    <span className={`relative flex ${small ? "h-9 w-9" : "h-10 w-10"} items-center justify-center rounded-lg border border-cyan-200/25 bg-[linear-gradient(135deg,#67e8f9,#5ef2b0)] text-[#05070b] shadow-[0_0_34px_rgba(103,232,249,0.22)]`}>
+      <Store size={small ? 17 : 19} strokeWidth={2.4} />
+      <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-[#07100d]/15 bg-white text-[#07100d] shadow-[0_4px_12px_rgba(0,0,0,0.18)]">
+        <Search size={10} strokeWidth={3} />
+      </span>
+    </span>
   );
 }
 
