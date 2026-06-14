@@ -1371,6 +1371,29 @@ button {
   padding: 0.85rem;
 }
 
+.mobile-landing-shortcut {
+  isolation: isolate;
+}
+
+.mobile-landing-shortcut::before {
+  position: absolute;
+  inset: -9px;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(103, 232, 249, 0.28), transparent 58%),
+    radial-gradient(circle at 72% 18%, rgba(94, 242, 176, 0.18), transparent 62%);
+  opacity: 0.68;
+  filter: blur(8px);
+}
+
+.mobile-landing-shortcut:focus-visible {
+  outline: 2px solid rgba(185, 251, 255, 0.78);
+  outline-offset: 4px;
+}
+
 @keyframes radarSweep {
   from {
     transform: rotate(0deg);

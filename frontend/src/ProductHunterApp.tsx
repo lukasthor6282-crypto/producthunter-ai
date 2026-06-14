@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, Search, Store } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -88,6 +88,23 @@ function PageLoader({ label = "Carregando..." }: { label?: string }) {
   );
 }
 
+function MobileLandingShortcut({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Ir para a landing page"
+      title="Ir para a landing page"
+      className="mobile-landing-shortcut fixed right-3 top-3 z-50 flex h-12 w-12 items-center justify-center rounded-lg border border-cyan-200/25 bg-[linear-gradient(135deg,#67e8f9,#5ef2b0)] text-[#05070b] shadow-[0_0_34px_rgba(103,232,249,0.24)] transition active:scale-95 lg:hidden"
+    >
+      <Store size={21} strokeWidth={2.4} />
+      <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-[#07100d]/15 bg-white text-[#07100d] shadow-[0_4px_12px_rgba(0,0,0,0.18)]">
+        <Search size={10} strokeWidth={3} />
+      </span>
+    </button>
+  );
+}
+
 export function ProductHunterApp() {
   const [activePage, setActivePage] = useState<PageKey>(() => readInitialPage());
   const [redirectAfterLogin, setRedirectAfterLogin] = useState<PageKey>("dashboard");
@@ -146,6 +163,12 @@ export function ProductHunterApp() {
   }, [activePage, clearSession, resetRecommendation]);
 
   const navigate = useCallback((page: PageKey) => {
+    if (page === "landing") {
+      clearStoredActivePage();
+      setActivePage("landing");
+      return;
+    }
+
     if (protectedPages.has(page) && !isAuthenticated) {
       setRedirectAfterLogin(page);
       setActivePage("login");
@@ -270,6 +293,7 @@ export function ProductHunterApp() {
         <>
           <div className="kombai-depth-bg" />
           <Sidebar activePage={activePage} onNavigate={navigate} mode={isCompactShell ? "compact" : "wide"} user={user} onLogout={handleLogout} isLoggingOut={isLoggingOut} />
+          <MobileLandingShortcut onClick={() => navigate("landing")} />
         </>
       )}
 
@@ -278,8 +302,8 @@ export function ProductHunterApp() {
           isPublicPage
             ? "min-h-screen"
             : isCompactShell
-              ? "min-h-screen min-w-0 px-3 pb-28 pt-0 sm:px-4 lg:ml-16 lg:px-8 lg:pb-24 xl:px-10"
-              : "min-h-screen min-w-0 px-3 pb-28 pt-0 sm:px-4 lg:ml-60 lg:px-8 lg:pb-24 xl:px-10"
+              ? "min-h-screen min-w-0 px-3 pb-28 pt-4 sm:px-4 lg:ml-16 lg:px-8 lg:pb-24 lg:pt-0 xl:px-10"
+              : "min-h-screen min-w-0 px-3 pb-28 pt-4 sm:px-4 lg:ml-60 lg:px-8 lg:pb-24 lg:pt-0 xl:px-10"
         }
       >
         {!isPublicPage && shouldShowRecommendationError && (
