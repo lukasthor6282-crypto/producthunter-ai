@@ -104,6 +104,7 @@ export function ProductHunterApp() {
     isLoggingOut,
     loginWithGoogle,
     logout,
+    retryAuthConfig,
     clearSession,
     error: authError,
   } = useAuth();
@@ -208,6 +209,9 @@ export function ProductHunterApp() {
           isGoogleConfigured={isGoogleConfigured}
           isLoggingIn={isLoggingIn}
           error={authError}
+          onRetryConfig={() => {
+            void retryAuthConfig();
+          }}
           onGoogleCredential={handleGoogleCredential}
           onNavigate={navigate}
         />
@@ -243,6 +247,7 @@ export function ProductHunterApp() {
     isGoogleConfigured,
     isLoggingIn,
     isLoggingOut,
+    retryAuthConfig,
     isRecommendationLoading,
     navigate,
     recommendationQuotaError,

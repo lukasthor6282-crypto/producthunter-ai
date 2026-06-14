@@ -1,4 +1,4 @@
-import { ArrowLeft, LockKeyhole, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, LockKeyhole, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCallback, useState } from "react";
 
@@ -11,6 +11,7 @@ type LoginPageProps = {
   isGoogleConfigured: boolean;
   isLoggingIn: boolean;
   error: string | null;
+  onRetryConfig?: () => void;
   onGoogleCredential: (credential: string) => Promise<void>;
   onNavigate: (page: PageKey) => void;
 };
@@ -21,10 +22,12 @@ export function LoginPage({
   isGoogleConfigured,
   isLoggingIn,
   error,
+  onRetryConfig,
   onGoogleCredential,
   onNavigate,
 }: LoginPageProps) {
   const [localError, setLocalError] = useState<string | null>(null);
+  const isConfigUnavailable = !isConfigLoading && !isGoogleConfigured && Boolean(error);
 
   const handleCredential = useCallback(
     async (credential: string) => {
@@ -94,7 +97,25 @@ export function LoginPage({
 
             <div className="mt-6">
               {isConfigLoading ? (
-                <div className="shimmer h-11 rounded-full border border-white/10 bg-white/[0.06]" />
+                <div>
+                  <div className="shimmer h-11 rounded-full border border-white/10 bg-white/[0.06]" />
+                  <p className="mt-3 text-sm font-semibold text-white/52">Conectando ao backend de login...</p>
+                </div>
+              ) : isConfigUnavailable ? (
+                <div className="rounded-lg border border-ember/30 bg-ember/10 p-4">
+                  <p className="text-sm font-bold text-ember">Nao foi possivel carregar o login agora.</p>
+                  <p className="mt-2 text-sm leading-6 text-white/62">
+                    O backend pode estar iniciando. Tente novamente em alguns segundos.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={onRetryConfig}
+                    className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-ember/30 px-4 text-sm font-black text-ember transition hover:bg-ember/10"
+                  >
+                    <RefreshCw size={15} />
+                    Tentar novamente
+                  </button>
+                </div>
               ) : (
                 <GoogleSignInButton
                   clientId={googleClientId}
@@ -105,7 +126,7 @@ export function LoginPage({
               )}
             </div>
 
-            {(error || localError) && (
+            {(error || localError) && !isConfigUnavailable && (
               <div className="mt-5 rounded-lg border border-ember/30 bg-ember/10 px-4 py-3 text-sm font-semibold text-ember">
                 {error || localError}
               </div>

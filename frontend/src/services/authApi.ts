@@ -8,12 +8,12 @@ import type {
 } from "../types/auth";
 
 export function getAuthConfig() {
-  return apiRequest<AuthConfig>("/auth/config");
+  return apiRequest<AuthConfig>("/auth/config", { timeoutMs: 30_000 });
 }
 
 export async function getCurrentSession() {
   try {
-    return await apiRequest<AuthSession>("/auth/me");
+    return await apiRequest<AuthSession>("/auth/me", { timeoutMs: 30_000 });
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
       return null;

@@ -77,6 +77,7 @@ export function useAuth() {
     isLoggingIn: loginMutation.isPending,
     isLoggingOut: logoutMutation.isPending,
     isGoogleConfigured: Boolean(configQuery.data?.google_auth_enabled),
+    retryAuthConfig: configQuery.refetch,
     loginWithGoogle: loginMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,
     clearSession,

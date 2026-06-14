@@ -106,7 +106,7 @@ export function GoogleSignInButton({ clientId, disabled, onCredential, onError }
   if (!clientId) {
     return (
       <div className="rounded-lg border border-ember/30 bg-ember/10 px-4 py-3 text-sm font-semibold text-ember">
-        Configure GOOGLE_CLIENT_ID no backend para ativar o login Google.
+        Login Google indisponivel neste ambiente. Tente novamente em alguns instantes.
       </div>
     );
   }
