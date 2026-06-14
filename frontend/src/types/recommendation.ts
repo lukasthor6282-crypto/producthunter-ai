@@ -34,6 +34,7 @@ export type RecommendationHistoryProduct = {
   niche: string;
   niche_label: string;
   image_url?: string | null;
+  image_urls?: string[];
   product_url?: string | null;
   average_price: number;
   opportunity_score: number;
@@ -79,6 +80,7 @@ export type RecommendationTopProductInsight = {
   niche: string;
   niche_label: string;
   image_url?: string | null;
+  image_urls?: string[];
   product_url?: string | null;
   average_price: number;
   appearances: number;

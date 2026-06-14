@@ -12,6 +12,7 @@ class Product(BaseModel):
     niche_label: str
     category: str
     image_url: str | None = None
+    image_urls: list[str] = Field(default_factory=list)
     product_url: str | None = None
     source: str = "simulated"
     source_product_id: str | None = None

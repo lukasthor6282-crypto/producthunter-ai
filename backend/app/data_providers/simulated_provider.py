@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+import json
 
 import numpy as np
 import pandas as pd
@@ -99,20 +100,44 @@ class SimulatedProductProvider:
             )
         if frame.empty:
             return None
+        frame = _decode_image_urls(frame)
         return Product(**frame.iloc[0].to_dict())
 
     def to_dataframe(self) -> pd.DataFrame:
         with self._engine.connect() as connection:
-            return pd.read_sql(text("select * from products order by id"), connection)
+            frame = pd.read_sql(text("select * from products order by id"), connection)
+        return _decode_image_urls(frame)
 
     def _seed_database(self, products: list[Product]) -> None:
         frame = pd.DataFrame([product.model_dump() for product in products])
+        frame["image_urls"] = frame["image_urls"].apply(json.dumps)
         frame.to_sql("products", self._engine, if_exists="replace", index=False)
 
 
 @lru_cache(maxsize=1)
 def get_provider() -> SimulatedProductProvider:
     return SimulatedProductProvider()
+
+
+def _decode_image_urls(frame: pd.DataFrame) -> pd.DataFrame:
+    if "image_urls" not in frame.columns:
+        return frame
+
+    decoded = frame.copy()
+    decoded["image_urls"] = decoded["image_urls"].apply(_parse_image_urls)
+    return decoded
+
+
+def _parse_image_urls(value: object) -> list[str]:
+    if isinstance(value, list):
+        return [str(item) for item in value if item]
+    if not isinstance(value, str) or not value:
+        return []
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        return []
+    return [str(item) for item in parsed if item] if isinstance(parsed, list) else []
 
 
 def _build_products() -> list[Product]:

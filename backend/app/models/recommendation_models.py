@@ -62,6 +62,7 @@ class RecommendationRunItem(Base):
     source: Mapped[str] = mapped_column(String(64), nullable=False)
     source_product_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     image_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    image_urls: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     product_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     average_price: Mapped[float] = mapped_column(Float, nullable=False)
     opportunity_score: Mapped[float] = mapped_column(Float, nullable=False)

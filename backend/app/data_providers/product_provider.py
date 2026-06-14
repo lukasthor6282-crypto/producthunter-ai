@@ -26,9 +26,12 @@ MIN_PRODUCTS_PER_SEGMENT = 4
 CATALOG_REQUEST_TIMEOUT_SECONDS = 2.5
 GOOGLE_SHOPPING_REQUEST_TIMEOUT_SECONDS = 4.0
 GOOGLE_SHOPPING_RESULTS_PER_QUERY = 8
+GOOGLE_IMAGES_REQUEST_TIMEOUT_SECONDS = 4.0
+GOOGLE_IMAGES_RESULTS_PER_QUERY = 10
 MERCADO_LIVRE_REQUEST_TIMEOUT_SECONDS = 2.0
 MERCADO_LIVRE_MAX_QUERIES = 6
 GOOGLE_SHOPPING_MAX_WORKERS = 4
+GOOGLE_IMAGES_MAX_WORKERS = 4
 
 MARKETPLACE_BY_INDEX = [marketplace["value"] for marketplace in MARKETPLACES]
 MARKETPLACE_LABELS = {marketplace["value"]: marketplace["label"] for marketplace in MARKETPLACES}
@@ -226,7 +229,7 @@ class HybridProductProvider:
                 except (requests.RequestException, TypeError, ValueError):
                     continue
 
-        return _dedupe_products(products)
+        return self._enrich_products_with_google_images(_dedupe_products(products))
 
     def _fetch_google_shopping_query(self, niche: str, query: str) -> list[Product]:
         response = requests.get(
@@ -255,6 +258,60 @@ class HybridProductProvider:
         ]
         return [product for product in products if product is not None]
 
+    def _enrich_products_with_google_images(self, products: list[Product]) -> list[Product]:
+        api_key = self._settings.serpapi_api_key
+        per_product = max(1, min(self._settings.google_images_per_product, 5))
+        if not api_key or not self._settings.google_images_enabled or per_product <= 1:
+            return [_with_image_gallery(product, product.image_urls or [product.image_url], limit=per_product) for product in products]
+
+        max_products = max(1, min(self._settings.google_images_max_products, len(products)))
+        selected_products = products[:max_products]
+        image_results: dict[int, list[str]] = {}
+
+        with ThreadPoolExecutor(max_workers=min(GOOGLE_IMAGES_MAX_WORKERS, max_products)) as executor:
+            futures = {
+                executor.submit(self._fetch_google_image_urls, product, per_product): product.id
+                for product in selected_products
+            }
+            for future in as_completed(futures):
+                product_id = futures[future]
+                try:
+                    image_results[product_id] = future.result()
+                except (requests.RequestException, TypeError, ValueError):
+                    image_results[product_id] = []
+
+        enriched: list[Product] = []
+        for product in products:
+            google_images = image_results.get(product.id, [])
+            image_urls = _usable_image_urls([*google_images, *product.image_urls, product.image_url], limit=per_product)
+            enriched.append(_with_image_gallery(product, image_urls, limit=per_product))
+
+        return enriched
+
+    def _fetch_google_image_urls(self, product: Product, limit: int) -> list[str]:
+        response = requests.get(
+            SERPAPI_SEARCH_URL,
+            params={
+                "engine": "google_images",
+                "q": f"{product.name} produto {product.niche_label}",
+                "api_key": self._settings.serpapi_api_key,
+                "gl": self._settings.google_shopping_country,
+                "hl": self._settings.google_shopping_language,
+                "ijn": 0,
+            },
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "ProductHunterAI/1.0",
+            },
+            timeout=GOOGLE_IMAGES_REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        images_results = response.json().get("images_results") or []
+        candidates: list[str | None] = []
+        for item in images_results[:GOOGLE_IMAGES_RESULTS_PER_QUERY]:
+            candidates.extend([item.get("original"), item.get("thumbnail")])
+        return _usable_image_urls(candidates, limit=limit)
+
     def _fetch_mercado_livre_products(self) -> list[Product]:
         token = self._settings.mercado_livre_access_token
         if not token:
@@ -271,7 +328,7 @@ class HybridProductProvider:
         for niche, queries in NICHE_SEARCH_QUERIES.items():
             for query in queries[:2]:
                 if attempted_queries >= MERCADO_LIVRE_MAX_QUERIES:
-                    return _dedupe_products(products)
+                    return self._enrich_products_with_google_images(_dedupe_products(products))
                 attempted_queries += 1
                 try:
                     response = requests.get(
@@ -289,7 +346,7 @@ class HybridProductProvider:
                     if product:
                         products.append(product)
 
-        return _dedupe_products(products)
+        return self._enrich_products_with_google_images(_dedupe_products(products))
 
     def _fetch_dummyjson_products(self) -> list[Product]:
         try:
@@ -315,6 +372,7 @@ class HybridProductProvider:
                     "source": "simulated_fallback",
                     "source_product_id": f"simulated_fallback:{product.id}",
                     "image_url": None,
+                    "image_urls": [],
                 }
             )
             for product in self._fallback.list_products()
@@ -395,6 +453,7 @@ def _google_shopping_to_product(item: dict[str, Any], niche: str, index: int) ->
             niche_label=NICHE_LABELS[niche],
             category=f"Google Shopping - {NICHE_LABELS[niche]}",
             image_url=image_url,
+            image_urls=_usable_image_urls([image_url], limit=3),
             product_url=product_link,
             source="google_shopping",
             source_product_id=source_id,
@@ -449,6 +508,7 @@ def _dummyjson_to_product(item: dict[str, Any], index: int) -> Product | None:
             niche_label=NICHE_LABELS[niche],
             category=CATEGORY_LABELS.get(category, category.replace("-", " ").title()),
             image_url=image_url,
+            image_urls=_usable_image_urls([image_url, *list(item.get("images") or [])], limit=3),
             product_url=f"{DUMMYJSON_URL}/{item['id']}",
             source="dummyjson",
             source_product_id=source_id,
@@ -504,6 +564,7 @@ def _mercado_livre_to_product(item: dict[str, Any], niche: str) -> Product | Non
             niche_label=NICHE_LABELS[niche],
             category=str(item.get("category_id") or "Mercado Livre"),
             image_url=image_url,
+            image_urls=_usable_image_urls([image_url], limit=3),
             product_url=item.get("permalink"),
             source="mercado_livre",
             source_product_id=source_id,
@@ -569,6 +630,40 @@ def _dedupe_products(products: list[Product]) -> list[Product]:
         seen.add(key)
         unique.append(product)
     return unique
+
+
+def _with_image_gallery(product: Product, image_urls: list[str | None], limit: int = 3) -> Product:
+    usable_urls = _usable_image_urls(image_urls, limit=limit)
+    return product.model_copy(update={"image_url": usable_urls[0] if usable_urls else None, "image_urls": usable_urls})
+
+
+def _usable_image_urls(values: list[Any], limit: int = 3) -> list[str]:
+    seen: set[str] = set()
+    usable_urls: list[str] = []
+
+    for value in values:
+        url = _https_url(value)
+        if not url or not _is_usable_product_image_url(url):
+            continue
+        if url in seen:
+            continue
+        seen.add(url)
+        usable_urls.append(url)
+        if len(usable_urls) >= limit:
+            break
+
+    return usable_urls
+
+
+def _is_usable_product_image_url(value: str) -> bool:
+    lower_value = value.lower()
+    if not lower_value.startswith(("http://", "https://")):
+        return False
+    if "dummyjson.com/image/" in lower_value and "text=" in lower_value:
+        return False
+    if any(host in lower_value for host in ("placehold.co", "placeholder.com", "via.placeholder.com", "dummyimage.com")):
+        return False
+    return True
 
 
 def _parse_price(value: Any) -> float | None:

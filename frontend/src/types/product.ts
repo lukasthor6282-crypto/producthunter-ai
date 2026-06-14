@@ -7,6 +7,7 @@ export type Product = {
   niche_label: string;
   category: string;
   image_url?: string | null;
+  image_urls?: string[];
   product_url?: string | null;
   source: string;
   source_product_id?: string | null;

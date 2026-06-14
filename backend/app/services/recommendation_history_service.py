@@ -157,6 +157,7 @@ def save_recommendation_run(
                 source=product.source,
                 source_product_id=product.source_product_id,
                 image_url=product.image_url,
+                image_urls=product.image_urls,
                 product_url=product.product_url,
                 average_price=product.average_price,
                 opportunity_score=item.opportunity_score,
@@ -201,6 +202,7 @@ def list_recommendation_history(db: Session, user: User, limit: int = 20) -> Rec
                 niche=item.niche,
                 niche_label=item.niche_label,
                 image_url=item.image_url,
+                image_urls=_history_image_urls(item.image_url, item.image_urls),
                 product_url=item.product_url,
                 average_price=item.average_price,
                 opportunity_score=item.opportunity_score,
@@ -362,6 +364,7 @@ def _top_product_insights(db: Session, user: User, limit: int) -> list[Recommend
             niche=str(row[4]),
             niche_label=str(row[5]),
             image_url=row[6],
+            image_urls=_history_image_urls(row[6], None),
             product_url=row[7],
             average_price=round(float(row[8] or 0), 2),
             appearances=int(row[9] or 0),
@@ -371,3 +374,10 @@ def _top_product_insights(db: Session, user: User, limit: int) -> list[Recommend
         )
         for row in rows
     ]
+
+
+def _history_image_urls(image_url: str | None, image_urls: list[str] | None) -> list[str]:
+    urls = image_urls or []
+    if image_url and image_url not in urls:
+        urls = [image_url, *urls]
+    return list(dict.fromkeys(urls))[:3]

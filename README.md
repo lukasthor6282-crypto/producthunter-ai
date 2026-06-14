@@ -112,11 +112,14 @@ $env:GOOGLE_SHOPPING_MAX_QUERIES="15"
 $env:GOOGLE_SHOPPING_COUNTRY="br"
 $env:GOOGLE_SHOPPING_LANGUAGE="pt"
 $env:GOOGLE_SHOPPING_LOCATION="Brazil"
+$env:GOOGLE_IMAGES_ENABLED="true"
+$env:GOOGLE_IMAGES_PER_PRODUCT="3"
+$env:GOOGLE_IMAGES_MAX_PRODUCTS="120"
 $env:MERCADO_LIVRE_ACCESS_TOKEN="seu-token-mercado-livre"
 $env:PRODUCT_CATALOG_TTL_SECONDS="900"
 ```
 
-O app nao raspa HTML do Google diretamente; ele usa um provedor/API de resultados e normaliza os produtos para o schema interno. As imagens entram em `image_url` e aparecem no ranking/detalhe, com acao para abrir ou copiar o link da imagem. Valide permissao/licenca antes de usar imagens em anuncios.
+O app nao raspa HTML do Google diretamente; ele usa um provedor/API de resultados e normaliza os produtos para o schema interno. A imagem principal entra em `image_url` e ate 3 fotos entram em `image_urls`, aparecendo no detalhe com acao para abrir ou copiar o link. Valide permissao/licenca antes de usar imagens em anuncios.
 
 Use `PRODUCT_SOURCE="google_shopping"` quando quiser recomendar apenas produtos vindos do Google Shopping com foto real. No modo `auto`, o sistema ainda usa fontes auxiliares para manter volume quando uma API externa falha.
 

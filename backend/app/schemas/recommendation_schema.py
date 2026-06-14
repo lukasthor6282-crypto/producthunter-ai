@@ -43,6 +43,7 @@ class RecommendationHistoryProduct(BaseModel):
     niche: str
     niche_label: str
     image_url: str | None = None
+    image_urls: list[str] = Field(default_factory=list)
     product_url: str | None = None
     average_price: float
     opportunity_score: float
@@ -88,6 +89,7 @@ class RecommendationTopProductInsight(BaseModel):
     niche: str
     niche_label: str
     image_url: str | None = None
+    image_urls: list[str] = Field(default_factory=list)
     product_url: str | None = None
     average_price: float
     appearances: int

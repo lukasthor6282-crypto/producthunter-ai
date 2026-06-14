@@ -24,3 +24,21 @@ export function isUsableProductImageUrl(imageUrl?: string | null) {
     return !(normalizedUrl.includes("dummyjson.com/image/") && normalizedUrl.includes("text="));
   }
 }
+
+export function getUsableProductImageUrls(imageUrl?: string | null, imageUrls: Array<string | null | undefined> = []) {
+  const seen = new Set<string>();
+  const urls: string[] = [];
+
+  for (const candidate of [...imageUrls, imageUrl]) {
+    if (!candidate || !isUsableProductImageUrl(candidate) || seen.has(candidate)) {
+      continue;
+    }
+    seen.add(candidate);
+    urls.push(candidate);
+    if (urls.length >= 3) {
+      break;
+    }
+  }
+
+  return urls;
+}

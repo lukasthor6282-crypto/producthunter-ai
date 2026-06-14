@@ -105,11 +105,14 @@ $env:GOOGLE_SHOPPING_MAX_QUERIES="15"
 $env:GOOGLE_SHOPPING_COUNTRY="br"
 $env:GOOGLE_SHOPPING_LANGUAGE="pt"
 $env:GOOGLE_SHOPPING_LOCATION="Brazil"
+$env:GOOGLE_IMAGES_ENABLED="true"
+$env:GOOGLE_IMAGES_PER_PRODUCT="3"
+$env:GOOGLE_IMAGES_MAX_PRODUCTS="120"
 $env:MERCADO_LIVRE_ACCESS_TOKEN="seu-token-mercado-livre"
 $env:PRODUCT_CATALOG_TTL_SECONDS="900"
 ```
 
-Use `PRODUCT_SOURCE="google_shopping"` para forcar apenas Google Shopping. Nesse modo, o provider nao injeta produtos simulados para completar volume e aceita apenas resultados com foto. As imagens sao salvas em `image_url` para exibir no ranking e permitir abrir/copiar o link no detalhe do produto. Antes de usar imagens em anuncios ou criativos, valide permissao/licenca com a fonte do produto.
+Use `PRODUCT_SOURCE="google_shopping"` para forcar apenas Google Shopping. Nesse modo, o provider nao injeta produtos simulados para completar volume e aceita apenas resultados com foto. A foto principal e salva em `image_url` e ate 3 fotos sao salvas em `image_urls`, permitindo abrir/copiar cada link no detalhe do produto. Antes de usar imagens em anuncios ou criativos, valide permissao/licenca com a fonte do produto.
 
 ## Estrutura
 

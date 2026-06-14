@@ -9,7 +9,7 @@ import { GlassCard } from "../ui/GlassCard";
 import { MarketplaceBadge } from "./MarketplaceBadge";
 import { ProductImage } from "./ProductImage";
 import { RiskIndicator } from "./RiskIndicator";
-import { isUsableProductImageUrl } from "../../lib/productImages";
+import { getUsableProductImageUrls } from "../../lib/productImages";
 import { brl, compactNumber, percent } from "../../services/format";
 import type { RecommendationItem } from "../../types/recommendation";
 
@@ -18,8 +18,9 @@ type ProductDetailPanelProps = {
 };
 
 export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
-  const [copiedImageUrl, setCopiedImageUrl] = useState(false);
-  const usableImageUrl = isUsableProductImageUrl(item.product.image_url) ? item.product.image_url : null;
+  const [copiedImageUrl, setCopiedImageUrl] = useState<string | null>(null);
+  const usableImageUrls = getUsableProductImageUrls(item.product.image_url, item.product.image_urls);
+  const primaryImageUrl = usableImageUrls[0] ?? null;
   const isRealMarketplaceProduct = ["google_shopping", "mercado_livre"].includes(item.product.source);
   const marginData = [
     { name: "Preço", margin: item.product.average_price },
@@ -66,10 +67,10 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
                     <ExternalLink size={15} />
                   </a>
                 )}
-                {usableImageUrl && (
+                {primaryImageUrl && (
                   <>
                     <a
-                      href={usableImageUrl}
+                      href={primaryImageUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex min-h-10 items-center gap-2 rounded-md border border-mint/25 bg-mint/10 px-3 text-sm font-black text-mint transition hover:border-mint/45 hover:bg-mint/15"
@@ -82,20 +83,56 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
                       className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/10 bg-white/[0.055] px-3 text-sm font-black text-mist transition hover:border-white/20 hover:bg-white/[0.08]"
                       onClick={async () => {
                         try {
-                          await navigator.clipboard.writeText(usableImageUrl);
-                          setCopiedImageUrl(true);
-                          window.setTimeout(() => setCopiedImageUrl(false), 1600);
+                          await navigator.clipboard.writeText(primaryImageUrl);
+                          setCopiedImageUrl(primaryImageUrl);
+                          window.setTimeout(() => setCopiedImageUrl(null), 1600);
                         } catch {
-                          setCopiedImageUrl(false);
+                          setCopiedImageUrl(null);
                         }
                       }}
                     >
-                      {copiedImageUrl ? <Check size={15} /> : <Copy size={15} />}
-                      {copiedImageUrl ? "Copiado" : "Copiar imagem"}
+                      {copiedImageUrl === primaryImageUrl ? <Check size={15} /> : <Copy size={15} />}
+                      {copiedImageUrl === primaryImageUrl ? "Copiado" : "Copiar imagem"}
                     </button>
                   </>
                 )}
               </div>
+              {usableImageUrls.length > 0 && (
+                <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.035] p-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-mist">Fotos do Google Imagens</p>
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {usableImageUrls.map((imageUrl, index) => (
+                      <div key={imageUrl} className="group relative overflow-hidden rounded-md border border-white/10 bg-black/20">
+                        <a href={imageUrl} target="_blank" rel="noreferrer" className="block aspect-square">
+                          <img
+                            src={imageUrl}
+                            alt={`${item.product.name} foto ${index + 1}`}
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                          />
+                        </a>
+                        <button
+                          type="button"
+                          className="absolute bottom-1.5 right-1.5 inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/15 bg-black/55 text-white backdrop-blur transition hover:border-mint/45 hover:text-mint"
+                          aria-label={`Copiar foto ${index + 1}`}
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(imageUrl);
+                              setCopiedImageUrl(imageUrl);
+                              window.setTimeout(() => setCopiedImageUrl(null), 1600);
+                            } catch {
+                              setCopiedImageUrl(null);
+                            }
+                          }}
+                        >
+                          {copiedImageUrl === imageUrl ? <Check size={15} /> : <Copy size={15} />}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               </div>
             </div>
             <OpportunityScoreRing score={item.opportunity_score} size="lg" />

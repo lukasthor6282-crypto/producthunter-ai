@@ -1,18 +1,18 @@
 import { ImageOff, Package } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { isUsableProductImageUrl } from "../../lib/productImages";
+import { getUsableProductImageUrls } from "../../lib/productImages";
 import type { Product } from "../../types/product";
 
 type ProductImageProps = {
-  product: Pick<Product, "name" | "image_url">;
+  product: Pick<Product, "name" | "image_url" | "image_urls">;
   className?: string;
   iconSize?: number;
 };
 
 export function ProductImage({ product, className = "h-16 w-16", iconSize = 20 }: ProductImageProps) {
   const [failed, setFailed] = useState(false);
-  const usableImageUrl = isUsableProductImageUrl(product.image_url) ? product.image_url : null;
+  const usableImageUrl = getUsableProductImageUrls(product.image_url, product.image_urls)[0] ?? null;
   const hasImage = Boolean(usableImageUrl && !failed);
 
   useEffect(() => {

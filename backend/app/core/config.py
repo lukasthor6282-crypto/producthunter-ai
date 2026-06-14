@@ -47,6 +47,9 @@ class Settings(BaseModel):
     google_shopping_language: str = "pt"
     google_shopping_location: str = "Brazil"
     google_shopping_max_queries: int = 15
+    google_images_enabled: bool = True
+    google_images_per_product: int = 3
+    google_images_max_products: int = 120
     product_catalog_ttl_seconds: int = 900
     session_cookie_name: str = "producthunter_session"
     session_cookie_secure: bool = False
@@ -111,6 +114,9 @@ def get_settings() -> Settings:
         google_shopping_language=getenv("GOOGLE_SHOPPING_LANGUAGE", "pt").strip().lower(),
         google_shopping_location=getenv("GOOGLE_SHOPPING_LOCATION", "Brazil").strip(),
         google_shopping_max_queries=_env_int("GOOGLE_SHOPPING_MAX_QUERIES", 15),
+        google_images_enabled=_env_bool("GOOGLE_IMAGES_ENABLED", True),
+        google_images_per_product=_env_int("GOOGLE_IMAGES_PER_PRODUCT", 3),
+        google_images_max_products=_env_int("GOOGLE_IMAGES_MAX_PRODUCTS", 120),
         product_catalog_ttl_seconds=int(getenv("PRODUCT_CATALOG_TTL_SECONDS", "900")),
         session_cookie_name=getenv("SESSION_COOKIE_NAME", "producthunter_session"),
         session_cookie_secure=session_cookie_secure,
