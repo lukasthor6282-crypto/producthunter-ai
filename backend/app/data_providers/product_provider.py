@@ -172,7 +172,7 @@ class HybridProductProvider:
         if source in {"auto", "google_shopping", "shopping"}:
             google_products = self._fetch_google_shopping_products()
             if source in {"google_shopping", "shopping"}:
-                return self._ensure_catalog_coverage(google_products) if google_products else self._fallback_products()
+                return google_products
 
             products = list(google_products)
             mercado_livre_products = self._fetch_mercado_livre_products()
@@ -314,7 +314,7 @@ class HybridProductProvider:
                     "id": _stable_product_id(f"simulated_fallback:{product.id}"),
                     "source": "simulated_fallback",
                     "source_product_id": f"simulated_fallback:{product.id}",
-                    "image_url": _placeholder_image_url(product.name),
+                    "image_url": None,
                 }
             )
             for product in self._fallback.list_products()
@@ -373,7 +373,10 @@ def _google_shopping_to_product(item: dict[str, Any], niche: str, index: int) ->
         source_name = str(item.get("source") or item.get("seller") or "Google Shopping").strip()
         product_link = _https_url(item.get("product_link") or item.get("link") or item.get("serpapi_product_api"))
         image_url = _https_url(item.get("thumbnail") or item.get("image"))
-        source_key = item.get("product_id") or item.get("position") or product_link or title
+        if not image_url:
+            return None
+
+        source_key = item.get("product_id") or product_link or title
         source_id = f"google_shopping:{source_key}"
         marketplace = _infer_shopping_marketplace(source_name, product_link)
         rating = float(item.get("rating") or item.get("extracted_rating") or 4.2)
@@ -436,7 +439,7 @@ def _dummyjson_to_product(item: dict[str, Any], index: int) -> Product | None:
         stock = int(item.get("stock") or 1)
         reviews = item.get("reviews") or []
         weight = max(0.08, float(item.get("weight") or 1) * 0.18)
-        image_url = item.get("thumbnail") or next(iter(item.get("images") or []), None)
+        image_url = _https_url(item.get("thumbnail") or next(iter(item.get("images") or []), None))
         return Product(
             id=_stable_product_id(source_id),
             name=str(item["title"]),
@@ -566,11 +569,6 @@ def _dedupe_products(products: list[Product]) -> list[Product]:
         seen.add(key)
         unique.append(product)
     return unique
-
-
-def _placeholder_image_url(name: str) -> str:
-    safe_name = name.replace(" ", "+")[:38]
-    return f"https://dummyjson.com/image/500x500/111827/f8fafc?text={safe_name}"
 
 
 def _parse_price(value: Any) -> float | None:

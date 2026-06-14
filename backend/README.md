@@ -109,7 +109,7 @@ $env:MERCADO_LIVRE_ACCESS_TOKEN="seu-token-mercado-livre"
 $env:PRODUCT_CATALOG_TTL_SECONDS="900"
 ```
 
-Use `PRODUCT_SOURCE="google_shopping"` para forcar apenas Google Shopping. As imagens sao salvas em `image_url` para exibir no ranking e permitir abrir/copiar o link no detalhe do produto. Antes de usar imagens em anuncios ou criativos, valide permissao/licenca com a fonte do produto.
+Use `PRODUCT_SOURCE="google_shopping"` para forcar apenas Google Shopping. Nesse modo, o provider nao injeta produtos simulados para completar volume e aceita apenas resultados com foto. As imagens sao salvas em `image_url` para exibir no ranking e permitir abrir/copiar o link no detalhe do produto. Antes de usar imagens em anuncios ou criativos, valide permissao/licenca com a fonte do produto.
 
 ## Estrutura
 

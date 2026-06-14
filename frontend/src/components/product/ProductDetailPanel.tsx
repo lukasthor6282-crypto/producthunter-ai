@@ -9,6 +9,7 @@ import { GlassCard } from "../ui/GlassCard";
 import { MarketplaceBadge } from "./MarketplaceBadge";
 import { ProductImage } from "./ProductImage";
 import { RiskIndicator } from "./RiskIndicator";
+import { isUsableProductImageUrl } from "../../lib/productImages";
 import { brl, compactNumber, percent } from "../../services/format";
 import type { RecommendationItem } from "../../types/recommendation";
 
@@ -18,6 +19,8 @@ type ProductDetailPanelProps = {
 
 export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
   const [copiedImageUrl, setCopiedImageUrl] = useState(false);
+  const usableImageUrl = isUsableProductImageUrl(item.product.image_url) ? item.product.image_url : null;
+  const isRealMarketplaceProduct = ["google_shopping", "mercado_livre"].includes(item.product.source);
   const marginData = [
     { name: "Preço", margin: item.product.average_price },
     { name: "Custo", margin: item.product.estimated_cost },
@@ -43,7 +46,7 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
                 <span className="rounded-md border border-white/10 bg-white/[0.055] px-2.5 py-1 text-xs font-bold text-mist">
                   {item.product.niche_label}
                 </span>
-                {item.product.source !== "simulated" && (
+                {isRealMarketplaceProduct && (
                   <span className="rounded-md border border-mint/20 bg-mint/10 px-2.5 py-1 text-xs font-bold text-mint">
                     Produto real
                   </span>
@@ -63,10 +66,10 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
                     <ExternalLink size={15} />
                   </a>
                 )}
-                {item.product.image_url && (
+                {usableImageUrl && (
                   <>
                     <a
-                      href={item.product.image_url}
+                      href={usableImageUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex min-h-10 items-center gap-2 rounded-md border border-mint/25 bg-mint/10 px-3 text-sm font-black text-mint transition hover:border-mint/45 hover:bg-mint/15"
@@ -79,7 +82,7 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
                       className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/10 bg-white/[0.055] px-3 text-sm font-black text-mist transition hover:border-white/20 hover:bg-white/[0.08]"
                       onClick={async () => {
                         try {
-                          await navigator.clipboard.writeText(item.product.image_url ?? "");
+                          await navigator.clipboard.writeText(usableImageUrl);
                           setCopiedImageUrl(true);
                           window.setTimeout(() => setCopiedImageUrl(false), 1600);
                         } catch {

@@ -118,6 +118,8 @@ $env:PRODUCT_CATALOG_TTL_SECONDS="900"
 
 O app nao raspa HTML do Google diretamente; ele usa um provedor/API de resultados e normaliza os produtos para o schema interno. As imagens entram em `image_url` e aparecem no ranking/detalhe, com acao para abrir ou copiar o link da imagem. Valide permissao/licenca antes de usar imagens em anuncios.
 
+Use `PRODUCT_SOURCE="google_shopping"` quando quiser recomendar apenas produtos vindos do Google Shopping com foto real. No modo `auto`, o sistema ainda usa fontes auxiliares para manter volume quando uma API externa falha.
+
 #### Assinaturas com Stripe
 
 Planos sugeridos para o MVP:
