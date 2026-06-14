@@ -25,6 +25,7 @@ import {
   TrendingUp,
   UserCircle2,
   Users,
+  X,
   Zap,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -139,9 +140,9 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
       />
 
       <main className="relative z-10">
-        <SpotlightSaasHero onStart={onStart} onNavigate={onNavigate} />
+        <SpotlightSaasHero onStart={onStart} />
 
-        <section id="how" className="relative mx-auto max-w-[1180px] px-5 py-20 md:py-24">
+        <section id="how" className="relative mx-auto max-w-[1180px] px-4 py-14 sm:px-5 sm:py-16 md:py-24">
           <div className="mx-auto max-w-3xl text-center">
             <p className="landing-section-label">Como funciona</p>
             <h2 className="font-display mt-4 text-3xl font-bold leading-tight text-white md:text-5xl">
@@ -153,7 +154,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
             </p>
           </div>
 
-          <div className="mt-12 grid gap-4 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 sm:mt-12 md:grid-cols-3">
             {steps.map((step, index) => (
               <motion.article
                 key={step.title}
@@ -174,13 +175,13 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
           </div>
         </section>
 
-        <section id="benefits" className="relative mx-auto max-w-[1180px] px-5 py-20 md:py-24">
+        <section id="benefits" className="relative mx-auto max-w-[1180px] px-4 py-14 sm:px-5 sm:py-16 md:py-24">
           <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
             <motion.article
               initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
-              className="landing-card landing-card-bright min-h-[420px] p-7 md:p-9"
+              className="landing-card landing-card-bright p-6 sm:min-h-[420px] md:p-9"
             >
               <p className="landing-section-label">Beneficios</p>
               <h2 className="font-display mt-5 max-w-2xl text-3xl font-bold leading-tight text-white md:text-5xl">
@@ -223,7 +224,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
           </div>
         </section>
 
-        <section id="demo" className="relative mx-auto max-w-[1180px] px-5 py-20 md:py-24">
+        <section id="demo" className="relative mx-auto max-w-[1180px] px-4 py-14 sm:px-5 sm:py-16 md:py-24">
           <div className="grid items-center gap-8 lg:grid-cols-[0.85fr_1.15fr]">
             <div>
               <p className="landing-section-label">Exemplo</p>
@@ -232,7 +233,7 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
                 A tela de recomendacao combina ranking claro, indicadores fortes e explicacao pronta para decisao.
                 O usuario entende por que aquele produto faz sentido para o cenario dele.
               </p>
-              <div className="mt-7 flex flex-wrap gap-3">
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button className="landing-primary-btn" onClick={onStart}>
                   <Sparkles size={18} />
                   Rodar analise demo
@@ -280,19 +281,19 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
           </div>
         </section>
 
-        <section className="relative mx-auto max-w-[1180px] px-5 py-8">
-          <div className="landing-card grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="relative mx-auto max-w-[1180px] px-4 py-8 sm:px-5">
+          <div className="landing-card grid grid-cols-2 gap-3 p-4 sm:grid-cols-2 sm:gap-4 sm:p-5 lg:grid-cols-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="p-5 text-center">
-                <p className="font-mono text-4xl font-black text-white">{stat.value}</p>
+              <div key={stat.label} className="p-3 text-center sm:p-5">
+                <p className="font-mono text-2xl font-black text-white sm:text-4xl">{stat.value}</p>
                 <p className="mt-2 text-sm font-semibold text-white/52">{stat.label}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section id="cta" className="relative mx-auto max-w-[1180px] px-5 py-20 md:py-24">
-          <div className="landing-card landing-card-bright overflow-hidden p-8 text-center md:p-12">
+        <section id="cta" className="relative mx-auto max-w-[1180px] px-4 py-14 sm:px-5 sm:py-16 md:py-24">
+          <div className="landing-card landing-card-bright overflow-hidden p-6 text-center md:p-12">
             <p className="landing-section-label">Comece agora</p>
             <h2 className="font-display mx-auto mt-5 max-w-3xl text-3xl font-bold leading-tight text-white md:text-5xl">
               Descubra o produto vencedor para o seu perfil de venda.
@@ -328,11 +329,29 @@ export function LandingPage({ onStart, onNavigate, user, onLogin, onLogout, isLo
 }
 
 function LandingNav({ user, onStart, onNavigate, onLogin, onLogout, isLoggingOut }: LandingPageProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+  const handleSectionClick = (id: string) => {
+    scrollToSection(id);
+    closeMobileMenu();
+  };
+  const handleNavigate = (page: PageKey) => {
+    onNavigate(page);
+    closeMobileMenu();
+  };
+
   return (
-    <nav className="fixed left-0 right-0 top-0 z-[100] flex items-center justify-between p-4 sm:p-5">
-      <button className="group flex items-center gap-3" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+    <nav className="fixed left-0 right-0 top-0 z-[100] flex items-center justify-between px-4 py-3 sm:p-5">
+      <button
+        className="group flex min-w-0 items-center gap-2 sm:gap-3"
+        onClick={() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          closeMobileMenu();
+        }}
+      >
         <BrandMark />
-        <span className="font-display text-lg font-bold text-white sm:text-xl">ProductHunter</span>
+        <span className="font-display hidden text-lg font-bold text-white min-[380px]:inline sm:text-xl">ProductHunter</span>
       </button>
 
       <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2 py-2 shadow-[0_18px_70px_rgba(0,0,0,0.32)] backdrop-blur-md md:flex">
@@ -375,11 +394,12 @@ function LandingNav({ user, onStart, onNavigate, onLogin, onLogout, isLoggingOut
           </button>
           <button
             type="button"
-            aria-label="Abrir menu"
-            onClick={() => onNavigate("dashboard")}
+            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((open) => !open)}
             className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md md:hidden"
           >
-            <Menu size={18} />
+            {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       ) : (
@@ -399,19 +419,85 @@ function LandingNav({ user, onStart, onNavigate, onLogin, onLogout, isLoggingOut
           </button>
           <button
             type="button"
-            aria-label="Abrir menu"
-            onClick={() => scrollToSection("how")}
+            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((open) => !open)}
             className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md md:hidden"
           >
-            <Menu size={18} />
+            {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       )}
+
+      {mobileMenuOpen ? (
+        <motion.div
+          initial={{ opacity: 0, y: -10, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          className="landing-mobile-nav-panel absolute left-3 right-3 top-[calc(100%+0.45rem)] rounded-lg border border-white/15 bg-[#071018]/88 p-3 shadow-[0_24px_90px_rgba(0,0,0,0.46)] backdrop-blur-2xl md:hidden"
+        >
+          <div className="grid grid-cols-2 gap-2">
+            {navLinks.map((link) => (
+              <button
+                key={link.id}
+                className="rounded-lg border border-white/10 bg-white/[0.055] px-3 py-3 text-left text-sm font-bold text-white/78 transition hover:border-cyan-300/30 hover:bg-cyan-300/10 hover:text-white"
+                onClick={() => handleSectionClick(link.id)}
+              >
+                {link.label}
+              </button>
+            ))}
+          </div>
+
+          {user ? (
+            <div className="mt-3 grid gap-2">
+              <button className="landing-primary-btn w-full" onClick={() => handleNavigate("dashboard")}>
+                <Sparkles size={17} />
+                Abrir app
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onLogout();
+                  closeMobileMenu();
+                }}
+                disabled={isLoggingOut}
+                className="landing-secondary-btn w-full disabled:opacity-50"
+              >
+                <LogOut size={17} />
+                Sair
+              </button>
+            </div>
+          ) : (
+            <div className="mt-3 grid gap-2">
+              <button
+                className="landing-primary-btn w-full"
+                onClick={() => {
+                  onStart();
+                  closeMobileMenu();
+                }}
+              >
+                <Sparkles size={17} />
+                Comecar gratis
+              </button>
+              <button
+                className="landing-secondary-btn w-full"
+                onClick={() => {
+                  onLogin();
+                  closeMobileMenu();
+                }}
+              >
+                <LogIn size={17} />
+                Entrar
+              </button>
+            </div>
+          )}
+        </motion.div>
+      ) : null}
     </nav>
   );
 }
 
-function SpotlightSaasHero({ onStart, onNavigate }: Pick<LandingPageProps, "onStart" | "onNavigate">) {
+function SpotlightSaasHero({ onStart }: Pick<LandingPageProps, "onStart">) {
   const cursor = useSmoothedSpotlight();
 
   return (
@@ -424,22 +510,47 @@ function SpotlightSaasHero({ onStart, onNavigate }: Pick<LandingPageProps, "onSt
         <SaasHeroScene revealed />
       </SpotlightRevealLayer>
 
-      <div className="pointer-events-none absolute left-0 right-0 top-[14%] z-50 flex flex-col items-center px-5 text-center">
+      <div className="landing-hero-copy pointer-events-none absolute left-0 right-0 top-[14%] z-50 flex flex-col items-center px-5 text-center">
+        <div
+          className="hero-anim hero-fade mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-cyan-100 sm:hidden"
+          style={{ animationDelay: "0.12s" }}
+        >
+          <Sparkles size={13} />
+          Radar IA de produtos
+        </div>
         <h1 className="max-w-[1120px] text-white">
           <span
-            className="hero-anim hero-reveal block font-display text-5xl font-bold leading-[0.95] sm:text-7xl md:text-8xl"
-            style={{ animationDelay: "0.25s", letterSpacing: "-0.04em" }}
+            className="landing-hero-title-line hero-anim hero-reveal block font-display text-5xl font-bold leading-[0.95] sm:text-7xl md:text-8xl"
+            style={{ animationDelay: "0.25s" }}
           >
             Produtos certos
           </span>
           {" "}
           <span
-            className="hero-anim hero-reveal mt-1 block font-display text-5xl font-normal leading-[0.95] text-white/92 sm:text-7xl md:text-8xl"
-            style={{ animationDelay: "0.42s", letterSpacing: "-0.06em" }}
+            className="landing-hero-title-line hero-anim hero-reveal mt-1 block font-display text-5xl font-normal leading-[0.95] text-white/92 sm:text-7xl md:text-8xl"
+            style={{ animationDelay: "0.42s" }}
           >
             no momento certo
           </span>
         </h1>
+        <p
+          className="hero-anim hero-fade mt-4 max-w-[330px] text-sm font-semibold leading-6 text-white/72 sm:hidden"
+          style={{ animationDelay: "0.56s" }}
+        >
+          Descubra produtos alinhados ao seu nicho, verba, marketplace e nivel de experiencia antes de investir.
+        </p>
+        <div
+          className="landing-mobile-hero-actions hero-anim hero-fade pointer-events-auto mt-5 flex w-full max-w-[330px] flex-col gap-3 sm:hidden"
+          style={{ animationDelay: "0.68s" }}
+        >
+          <button
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#67e8f9] px-6 py-3 text-sm font-bold text-[#041016] shadow-lg shadow-cyan-300/24 transition-all hover:bg-[#5ef2b0] active:scale-95"
+            onClick={onStart}
+          >
+            <Sparkles size={16} />
+            Fazer analise gratis
+          </button>
+        </div>
       </div>
 
       <div
@@ -453,7 +564,7 @@ function SpotlightSaasHero({ onStart, onNavigate }: Pick<LandingPageProps, "onSt
       </div>
 
       <div
-        className="hero-anim hero-fade absolute bottom-8 left-5 right-5 z-50 flex max-w-full flex-col items-start gap-4 sm:bottom-8 sm:left-auto sm:right-10 sm:max-w-[280px] md:right-14"
+        className="hero-anim hero-fade absolute bottom-8 left-5 right-5 z-50 hidden max-w-full flex-col items-start gap-4 sm:bottom-8 sm:left-auto sm:right-10 sm:flex sm:max-w-[280px] md:right-14"
         style={{ animationDelay: "0.85s" }}
       >
         <p className="text-xs leading-relaxed text-white/80 sm:text-sm">
@@ -466,13 +577,6 @@ function SpotlightSaasHero({ onStart, onNavigate }: Pick<LandingPageProps, "onSt
           >
             <Sparkles size={16} />
             Fazer analise gratis
-          </button>
-          <button
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.18] bg-white/10 px-7 py-3 text-sm font-bold text-white/[0.86] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white/[0.16] active:scale-95 sm:hidden"
-            onClick={() => onNavigate("dashboard")}
-          >
-            Abrir dashboard
-            <ArrowRight size={16} />
           </button>
         </div>
       </div>
@@ -556,7 +660,7 @@ function SaasHeroScene({ revealed = false }: { revealed?: boolean }) {
         <path d="M300 740 C 518 640 710 744 878 558 S 1114 412 1340 610" fill="none" stroke={`url(#${revealed ? "heroLineReveal" : "heroLineBase"})`} strokeWidth="1.2" />
       </svg>
 
-      <div className="absolute left-1/2 top-[60%] w-[min(780px,90vw)] -translate-x-1/2 -translate-y-1/2 sm:top-[67%] sm:w-[min(780px,86vw)]">
+      <div className="saas-panel-stage absolute left-1/2 top-[60%] w-[min(780px,90vw)] -translate-x-1/2 -translate-y-1/2 sm:top-[67%] sm:w-[min(780px,86vw)]">
         <div className={`saas-hero-panel ${revealed ? "saas-hero-panel-revealed" : ""}`}>
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
             <div className="flex items-center gap-2">
