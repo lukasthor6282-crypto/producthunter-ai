@@ -7,8 +7,37 @@ import type {
   SecuritySessionsResponse,
 } from "../types/auth";
 
-export function getAuthConfig() {
-  return apiRequest<AuthConfig>("/auth/config", { timeoutMs: 30_000 });
+const AUTH_CONFIG_TIMEOUT_MS = 25_000;
+const AUTH_CONFIG_RETRY_DELAYS_MS = [1_200, 2_500, 4_000, 6_000];
+
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function isBackendStartupError(error: unknown) {
+  return error instanceof ApiError && error.status === 408;
+}
+
+export async function getAuthConfig() {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= AUTH_CONFIG_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      return await apiRequest<AuthConfig>("/auth/config", { timeoutMs: AUTH_CONFIG_TIMEOUT_MS });
+    } catch (error) {
+      lastError = error;
+      if (!isBackendStartupError(error) || attempt >= AUTH_CONFIG_RETRY_DELAYS_MS.length) {
+        break;
+      }
+      await sleep(AUTH_CONFIG_RETRY_DELAYS_MS[attempt]);
+    }
+  }
+
+  if (lastError instanceof ApiError && lastError.status === 408) {
+    throw new Error("O backend de login ainda esta iniciando. Tente novamente em alguns segundos.");
+  }
+
+  throw lastError;
 }
 
 export async function getCurrentSession() {

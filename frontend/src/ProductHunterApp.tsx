@@ -106,7 +106,8 @@ export function ProductHunterApp() {
     logout,
     retryAuthConfig,
     clearSession,
-    error: authError,
+    loginError,
+    configError,
   } = useAuth();
 
   useEffect(() => {
@@ -208,12 +209,12 @@ export function ProductHunterApp() {
           isConfigLoading={isConfigLoading}
           isGoogleConfigured={isGoogleConfigured}
           isLoggingIn={isLoggingIn}
-          error={authError}
           onRetryConfig={() => {
             void retryAuthConfig();
           }}
           onGoogleCredential={handleGoogleCredential}
           onNavigate={navigate}
+          error={loginError ?? configError}
         />
       ),
       dashboard: <Dashboard />,
@@ -238,7 +239,7 @@ export function ProductHunterApp() {
   }, [
     activePage,
     authConfig?.google_client_id,
-    authError,
+    configError,
     data,
     generate,
     handleGoogleCredential,
@@ -246,6 +247,7 @@ export function ProductHunterApp() {
     isConfigLoading,
     isGoogleConfigured,
     isLoggingIn,
+    loginError,
     isLoggingOut,
     retryAuthConfig,
     isRecommendationLoading,

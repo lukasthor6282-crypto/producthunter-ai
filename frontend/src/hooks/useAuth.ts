@@ -32,12 +32,13 @@ export function useAuth() {
     queryKey: ["auth", "config"],
     queryFn: getAuthConfig,
     staleTime: Number.POSITIVE_INFINITY,
-    retry: 1,
+    retry: false,
   });
 
   const sessionQuery = useQuery({
     queryKey: authSessionKey,
     queryFn: getCurrentSession,
+    enabled: configQuery.isSuccess,
     retry: false,
     staleTime: 1000 * 60,
   });
@@ -58,22 +59,17 @@ export function useAuth() {
     },
   });
 
-  const error =
-    loginMutation.error instanceof Error
-      ? loginMutation.error.message
-      : sessionQuery.error instanceof Error
-        ? sessionQuery.error.message
-        : configQuery.error instanceof Error
-          ? configQuery.error.message
-          : null;
+  const loginError = loginMutation.error instanceof Error ? loginMutation.error.message : null;
+  const configError = configQuery.error instanceof Error ? configQuery.error.message : null;
+  const sessionError = sessionQuery.error instanceof Error ? sessionQuery.error.message : null;
 
   return {
     authConfig: configQuery.data ?? null,
     session: sessionQuery.data ?? null,
     user: sessionQuery.data?.user ?? null,
     isAuthenticated: Boolean(sessionQuery.data?.user),
-    isLoading: sessionQuery.isLoading,
-    isConfigLoading: configQuery.isLoading,
+    isLoading: configQuery.isPending || sessionQuery.isLoading,
+    isConfigLoading: configQuery.isPending || configQuery.isFetching,
     isLoggingIn: loginMutation.isPending,
     isLoggingOut: logoutMutation.isPending,
     isGoogleConfigured: Boolean(configQuery.data?.google_auth_enabled),
@@ -81,6 +77,9 @@ export function useAuth() {
     loginWithGoogle: loginMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,
     clearSession,
-    error,
+    loginError,
+    configError,
+    sessionError,
+    error: loginError ?? configError ?? sessionError,
   };
 }

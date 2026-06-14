@@ -111,7 +111,7 @@ export async function apiRequest<T>(path: string, init?: ApiRequestInit): Promis
     });
   } catch (error) {
     if (controller.signal.aborted) {
-      throw new ApiError(408, "Tempo limite ao conectar com o backend. Tente novamente em alguns segundos.");
+      throw new ApiError(408, "O backend demorou para responder. Tente novamente em alguns segundos.");
     }
     throw error;
   } finally {
