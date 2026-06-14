@@ -1,4 +1,5 @@
-import { ExternalLink, Package, Star, Truck } from "lucide-react";
+import { Check, Copy, ExternalLink, Image, Package, Star, Truck } from "lucide-react";
+import { useState } from "react";
 
 import { ConversionChart } from "../charts/ConversionChart";
 import { MarginChart } from "../charts/MarginChart";
@@ -16,6 +17,7 @@ type ProductDetailPanelProps = {
 };
 
 export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
+  const [copiedImageUrl, setCopiedImageUrl] = useState(false);
   const marginData = [
     { name: "Preço", margin: item.product.average_price },
     { name: "Custo", margin: item.product.estimated_cost },
@@ -49,17 +51,48 @@ export function ProductDetailPanel({ item }: ProductDetailPanelProps) {
               </div>
               <h2 className="text-2xl font-extrabold leading-tight text-white md:text-3xl">{item.product.name}</h2>
               <p className="mt-4 text-sm leading-7 text-mist">{item.explanation}</p>
-              {item.product.product_url && (
-                <a
-                  href={item.product.product_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-md border border-cyan-300/25 bg-cyan-300/10 px-3 text-sm font-black text-cyan-200 transition hover:border-cyan-300/45 hover:bg-cyan-300/15"
-                >
-                  Ver fonte do produto
-                  <ExternalLink size={15} />
-                </a>
-              )}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {item.product.product_url && (
+                  <a
+                    href={item.product.product_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-10 items-center gap-2 rounded-md border border-cyan-300/25 bg-cyan-300/10 px-3 text-sm font-black text-cyan-200 transition hover:border-cyan-300/45 hover:bg-cyan-300/15"
+                  >
+                    Ver fonte do produto
+                    <ExternalLink size={15} />
+                  </a>
+                )}
+                {item.product.image_url && (
+                  <>
+                    <a
+                      href={item.product.image_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-md border border-mint/25 bg-mint/10 px-3 text-sm font-black text-mint transition hover:border-mint/45 hover:bg-mint/15"
+                    >
+                      Abrir imagem
+                      <Image size={15} />
+                    </a>
+                    <button
+                      type="button"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-md border border-white/10 bg-white/[0.055] px-3 text-sm font-black text-mist transition hover:border-white/20 hover:bg-white/[0.08]"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(item.product.image_url ?? "");
+                          setCopiedImageUrl(true);
+                          window.setTimeout(() => setCopiedImageUrl(false), 1600);
+                        } catch {
+                          setCopiedImageUrl(false);
+                        }
+                      }}
+                    >
+                      {copiedImageUrl ? <Check size={15} /> : <Copy size={15} />}
+                      {copiedImageUrl ? "Copiado" : "Copiar imagem"}
+                    </button>
+                  </>
+                )}
+              </div>
               </div>
             </div>
             <OpportunityScoreRing score={item.opportunity_score} size="lg" />

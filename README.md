@@ -103,13 +103,20 @@ python -m alembic upgrade head
 
 #### Coleta real de produtos
 
-Por padrao, o backend usa `PRODUCT_SOURCE=auto`: tenta Mercado Livre quando houver token e, se nao houver, usa um catalogo publico de produtos com fotos. Para ativar busca oficial do Mercado Livre, configure:
+Por padrao, o backend usa `PRODUCT_SOURCE=auto`: tenta Google Shopping via API configuravel quando houver `SERPAPI_API_KEY`, combina Mercado Livre quando houver token e, se nao houver, usa um catalogo publico de produtos com fotos. Para ativar coleta real com imagens, configure:
 
 ```powershell
 $env:PRODUCT_SOURCE="auto"
+$env:SERPAPI_API_KEY="sua-chave-serpapi"
+$env:GOOGLE_SHOPPING_MAX_QUERIES="15"
+$env:GOOGLE_SHOPPING_COUNTRY="br"
+$env:GOOGLE_SHOPPING_LANGUAGE="pt"
+$env:GOOGLE_SHOPPING_LOCATION="Brazil"
 $env:MERCADO_LIVRE_ACCESS_TOKEN="seu-token-mercado-livre"
 $env:PRODUCT_CATALOG_TTL_SECONDS="900"
 ```
+
+O app nao raspa HTML do Google diretamente; ele usa um provedor/API de resultados e normaliza os produtos para o schema interno. As imagens entram em `image_url` e aparecem no ranking/detalhe, com acao para abrir ou copiar o link da imagem. Valide permissao/licenca antes de usar imagens em anuncios.
 
 #### Assinaturas com Stripe
 

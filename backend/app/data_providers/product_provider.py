@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from functools import lru_cache
+import re
 from time import monotonic
 from typing import Any
+import unicodedata
 from urllib.parse import urlencode
 import zlib
 
@@ -16,15 +19,20 @@ from app.utils.constants import MARKETPLACES, NICHES
 
 
 DUMMYJSON_URL = "https://dummyjson.com/products"
+SERPAPI_SEARCH_URL = "https://serpapi.com/search.json"
 MERCADO_LIVRE_SEARCH_URL = "https://api.mercadolibre.com/sites/MLB/search"
 BRL_PER_USD = 5.2
 MIN_PRODUCTS_PER_SEGMENT = 4
 CATALOG_REQUEST_TIMEOUT_SECONDS = 2.5
+GOOGLE_SHOPPING_REQUEST_TIMEOUT_SECONDS = 4.0
+GOOGLE_SHOPPING_RESULTS_PER_QUERY = 8
 MERCADO_LIVRE_REQUEST_TIMEOUT_SECONDS = 2.0
 MERCADO_LIVRE_MAX_QUERIES = 6
+GOOGLE_SHOPPING_MAX_WORKERS = 4
 
 MARKETPLACE_BY_INDEX = [marketplace["value"] for marketplace in MARKETPLACES]
 MARKETPLACE_LABELS = {marketplace["value"]: marketplace["label"] for marketplace in MARKETPLACES}
+MARKETPLACE_LABELS["google_shopping"] = "Google Shopping"
 NICHE_LABELS = {niche["value"]: niche["label"] for niche in NICHES}
 
 DUMMY_CATEGORY_TO_NICHE = {
@@ -70,6 +78,37 @@ NICHE_SEARCH_QUERIES = {
     "stationery": ["planner", "caneta gel", "organizador mesa"],
     "kitchen": ["cortador legumes", "pote hermetico", "garrafa inox"],
     "organization": ["caixa organizadora", "divisor gaveta", "cabide multifuncional"],
+}
+
+GOOGLE_SHOPPING_SEARCH_QUERIES = {
+    "technology": ["smartwatch barato", "fone bluetooth", "carregador turbo usb c"],
+    "beauty": ["escova secadora", "kit skincare", "massageador facial"],
+    "home": ["organizador de casa", "aspirador portatil", "luminaria led"],
+    "toys": ["brinquedo educativo", "lego infantil", "brinquedo montessori"],
+    "pets": ["bebedouro pet automatico", "cama pet lavavel", "coleira led pet"],
+    "fashion": ["bolsa transversal feminina", "relogio masculino", "tenis casual feminino"],
+    "tools": ["parafusadeira bateria", "kit ferramentas", "trena laser"],
+    "automotive": ["suporte veicular magnetico", "camera de re veicular", "aspirador automotivo"],
+    "decoration": ["luminaria led decorativa", "vaso decorativo", "quadro decorativo"],
+    "health": ["umidificador de ar", "balanca digital", "massageador cervical"],
+    "sports": ["garrafa termica esportiva", "corda speed", "luva treino academia"],
+    "games": ["mouse gamer", "headset gamer", "controle mobile"],
+    "stationery": ["planner semanal", "caneta gel kit", "organizador de mesa"],
+    "kitchen": ["cortador de legumes", "pote hermetico kit", "garrafa inox"],
+    "organization": ["caixa organizadora", "divisor de gaveta", "cabide multifuncional"],
+}
+
+SHOPPING_SOURCE_MARKETPLACES = {
+    "mercado livre": "mercado_livre",
+    "mercadolivre": "mercado_livre",
+    "amazon": "amazon",
+    "shopee": "shopee",
+    "ali express": "aliexpress",
+    "aliexpress": "aliexpress",
+    "tiktok": "tiktok_shop",
+    "magalu": "magalu",
+    "magazine luiza": "magalu",
+    "shein": "shein",
 }
 
 CATEGORY_LABELS = {
@@ -130,10 +169,22 @@ class HybridProductProvider:
     def _fetch_products(self) -> list[Product]:
         source = self._settings.product_source
 
-        if source in {"auto", "dummyjson", "catalog"}:
+        if source in {"auto", "google_shopping", "shopping"}:
+            google_products = self._fetch_google_shopping_products()
+            if source in {"google_shopping", "shopping"}:
+                return self._ensure_catalog_coverage(google_products) if google_products else self._fallback_products()
+
+            products = list(google_products)
+            mercado_livre_products = self._fetch_mercado_livre_products()
+            if mercado_livre_products:
+                products.extend(mercado_livre_products)
+
             catalog_products = self._fetch_dummyjson_products()
             if catalog_products:
-                return self._ensure_catalog_coverage(catalog_products)
+                products.extend(catalog_products)
+
+            if products:
+                return self._ensure_catalog_coverage(_dedupe_products(products))
 
         if source == "mercado_livre":
             mercado_livre_products = self._fetch_mercado_livre_products()
@@ -146,7 +197,63 @@ class HybridProductProvider:
             if catalog_products:
                 return self._ensure_catalog_coverage(catalog_products)
 
+        if source in {"dummyjson", "catalog"}:
+            catalog_products = self._fetch_dummyjson_products()
+            if catalog_products:
+                return self._ensure_catalog_coverage(catalog_products)
+
         return self._fallback_products()
+
+    def _fetch_google_shopping_products(self) -> list[Product]:
+        api_key = self._settings.serpapi_api_key
+        if not api_key:
+            return []
+
+        queries = _google_shopping_query_plan()
+
+        max_queries = max(1, min(self._settings.google_shopping_max_queries, len(queries)))
+        selected_queries = queries[:max_queries]
+        products: list[Product] = []
+
+        with ThreadPoolExecutor(max_workers=min(GOOGLE_SHOPPING_MAX_WORKERS, max_queries)) as executor:
+            futures = {
+                executor.submit(self._fetch_google_shopping_query, niche, query): (niche, query)
+                for niche, query in selected_queries
+            }
+            for future in as_completed(futures):
+                try:
+                    products.extend(future.result())
+                except (requests.RequestException, TypeError, ValueError):
+                    continue
+
+        return _dedupe_products(products)
+
+    def _fetch_google_shopping_query(self, niche: str, query: str) -> list[Product]:
+        response = requests.get(
+            SERPAPI_SEARCH_URL,
+            params={
+                "engine": "google_shopping",
+                "q": query,
+                "api_key": self._settings.serpapi_api_key,
+                "gl": self._settings.google_shopping_country,
+                "hl": self._settings.google_shopping_language,
+                "location": self._settings.google_shopping_location,
+                "num": GOOGLE_SHOPPING_RESULTS_PER_QUERY,
+            },
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "ProductHunterAI/1.0",
+            },
+            timeout=GOOGLE_SHOPPING_REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        shopping_results = payload.get("shopping_results") or []
+        products = [
+            _google_shopping_to_product(item, niche, index)
+            for index, item in enumerate(shopping_results[:GOOGLE_SHOPPING_RESULTS_PER_QUERY], start=1)
+        ]
+        return [product for product in products if product is not None]
 
     def _fetch_mercado_livre_products(self) -> list[Product]:
         token = self._settings.mercado_livre_access_token
@@ -237,6 +344,84 @@ class HybridProductProvider:
 @lru_cache(maxsize=1)
 def get_provider() -> HybridProductProvider:
     return HybridProductProvider()
+
+
+def _google_shopping_query_plan() -> list[tuple[str, str]]:
+    max_terms = max(len(search_terms) for search_terms in GOOGLE_SHOPPING_SEARCH_QUERIES.values())
+    queries: list[tuple[str, str]] = []
+
+    for term_index in range(max_terms):
+        for niche_config in NICHES:
+            niche = niche_config["value"]
+            search_terms = GOOGLE_SHOPPING_SEARCH_QUERIES.get(niche, [])
+            if term_index < len(search_terms):
+                queries.append((niche, search_terms[term_index]))
+
+    return queries
+
+
+def _google_shopping_to_product(item: dict[str, Any], niche: str, index: int) -> Product | None:
+    try:
+        title = str(item.get("title") or "").strip()
+        if not title:
+            return None
+
+        price = _parse_price(item.get("extracted_price") or item.get("price"))
+        if price is None or price <= 0:
+            return None
+
+        source_name = str(item.get("source") or item.get("seller") or "Google Shopping").strip()
+        product_link = _https_url(item.get("product_link") or item.get("link") or item.get("serpapi_product_api"))
+        image_url = _https_url(item.get("thumbnail") or item.get("image"))
+        source_key = item.get("product_id") or item.get("position") or product_link or title
+        source_id = f"google_shopping:{source_key}"
+        marketplace = _infer_shopping_marketplace(source_name, product_link)
+        rating = float(item.get("rating") or item.get("extracted_rating") or 4.2)
+        reviews_count = _parse_int(item.get("reviews") or item.get("reviews_count")) or 80
+        comparison_count = _parse_int(item.get("number_of_comparisons") or item.get("product_count")) or 0
+        delivery_days = _delivery_days_from_text(str(item.get("delivery") or item.get("shipping") or ""))
+        discount_hint = 7 + (index % 5) * 2
+        estimated_cost_ratio = 0.50 if price <= 140 else 0.54
+
+        return Product(
+            id=_stable_product_id(source_id),
+            name=title,
+            marketplace=marketplace,
+            marketplace_label=MARKETPLACE_LABELS.get(marketplace, source_name or "Google Shopping"),
+            niche=niche,
+            niche_label=NICHE_LABELS[niche],
+            category=f"Google Shopping - {NICHE_LABELS[niche]}",
+            image_url=image_url,
+            product_url=product_link,
+            source="google_shopping",
+            source_product_id=source_id,
+            average_price=round(price, 2),
+            min_price=round(price * 0.92, 2),
+            max_price=round(price * 1.16, 2),
+            estimated_cost=round(price * estimated_cost_ratio, 2),
+            platform_fee_percent=_marketplace_fee(marketplace),
+            estimated_shipping=0 if "gratis" in str(item.get("delivery") or "").lower() else 16,
+            packaging_cost=round(2.8 + min(7, price * 0.012), 2),
+            estimated_tax_percent=0.065,
+            affiliate_commission_percent=round(0.05 + min(0.08, discount_hint / 500), 4),
+            competitors_count=max(18, 120 - min(comparison_count, 80) + index * 3),
+            search_volume=max(950, 1800 + comparison_count * 260 + reviews_count * 10),
+            trend_score=round(_clamp(52 + rating * 7 + min(reviews_count, 1500) * 0.012 + comparison_count * 0.55, 15, 98), 2),
+            average_rating=round(_clamp(rating, 0, 5), 2),
+            reviews_count=max(0, reviews_count),
+            sales_velocity=round(_clamp(42 + rating * 5 + min(reviews_count, 1300) * 0.018 + comparison_count * 0.45, 8, 98), 2),
+            return_risk=round(_clamp(39 - rating * 3 + delivery_days * 0.8, 5, 88), 2),
+            seasonality=round(_clamp(34 + (index % 8) * 5, 5, 92), 2),
+            product_weight_kg=_weight_for_niche(niche, price),
+            delivery_days=delivery_days,
+            supplier_reliability=round(_clamp(66 + rating * 5 + min(comparison_count, 40) * 0.3, 35, 98), 2),
+            visual_appeal=92 if image_url else 58,
+            kit_potential=round(_clamp(44 + comparison_count * 0.4 + (index % 4) * 5, 5, 96), 2),
+            recurrence_score=round(_recurrence_for_niche(niche, ""), 2),
+            created_for_demo=False,
+        )
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 def _dummyjson_to_product(item: dict[str, Any], index: int) -> Product | None:
@@ -357,6 +542,7 @@ def _marketplace_fee(marketplace: str) -> float:
         "tiktok_shop": 0.10,
         "magalu": 0.16,
         "shein": 0.12,
+        "google_shopping": 0.13,
     }.get(marketplace, 0.13)
 
 
@@ -387,11 +573,110 @@ def _placeholder_image_url(name: str) -> str:
     return f"https://dummyjson.com/image/500x500/111827/f8fafc?text={safe_name}"
 
 
+def _parse_price(value: Any) -> float | None:
+    if isinstance(value, (int, float)):
+        return float(value)
+    if not value:
+        return None
+
+    text = str(value).strip()
+    is_usd = "us$" in text.lower() or "usd" in text.lower()
+    cleaned = re.sub(r"[^\d,.\-]", "", text)
+    if not cleaned:
+        return None
+
+    if "," in cleaned and "." in cleaned:
+        if cleaned.rfind(",") > cleaned.rfind("."):
+            cleaned = cleaned.replace(".", "").replace(",", ".")
+        else:
+            cleaned = cleaned.replace(",", "")
+    elif "," in cleaned:
+        integer, _, decimals = cleaned.rpartition(",")
+        if len(decimals) <= 2:
+            cleaned = integer.replace(".", "") + "." + decimals
+        else:
+            cleaned = cleaned.replace(",", "")
+    else:
+        parts = cleaned.split(".")
+        if len(parts) > 2:
+            cleaned = "".join(parts[:-1]) + "." + parts[-1]
+
+    try:
+        price = float(cleaned)
+    except ValueError:
+        return None
+    return round(price * BRL_PER_USD, 2) if is_usd else round(price, 2)
+
+
+def _parse_int(value: Any) -> int | None:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if not value:
+        return None
+
+    digits = re.sub(r"[^\d]", "", str(value))
+    return int(digits) if digits else None
+
+
+def _infer_shopping_marketplace(source_name: str, product_link: Any) -> str:
+    searchable = f"{source_name} {product_link or ''}".lower()
+    for token, marketplace in SHOPPING_SOURCE_MARKETPLACES.items():
+        if token in searchable:
+            return marketplace
+    return "google_shopping"
+
+
+def _delivery_days_from_text(value: str) -> int:
+    text = _strip_accents(value.lower())
+    if not text:
+        return 6
+    if any(token in text for token in ("hoje", "amanha", "24h")):
+        return 1
+    if "gratis" in text:
+        return 4
+
+    parsed = _parse_int(text)
+    if parsed:
+        return int(_clamp(parsed, 1, 25))
+    return 6
+
+
+def _weight_for_niche(niche: str, price: float) -> float:
+    base = {
+        "beauty": 0.25,
+        "fashion": 0.35,
+        "stationery": 0.22,
+        "technology": 0.42,
+        "games": 0.55,
+        "automotive": 0.75,
+        "tools": 0.95,
+        "home": 0.9,
+        "kitchen": 0.62,
+        "organization": 0.68,
+        "sports": 0.54,
+        "pets": 0.82,
+        "toys": 0.5,
+        "decoration": 0.7,
+        "health": 0.45,
+    }.get(niche, 0.55)
+    return round(_clamp(base + price / 1800, 0.08, 4.0), 2)
+
+
+def _strip_accents(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value)
+    return "".join(character for character in normalized if not unicodedata.combining(character))
+
+
 def _stable_product_id(value: str) -> int:
     return zlib.crc32(value.encode("utf-8")) & 0x7FFFFFFF
 
 
-def _https_url(value: str | None) -> str | None:
+def _https_url(value: Any) -> str | None:
+    if not value:
+        return None
+    value = str(value).strip()
     if not value:
         return None
     if value.startswith("http://"):

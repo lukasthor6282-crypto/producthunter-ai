@@ -42,6 +42,11 @@ class Settings(BaseModel):
     stripe_price_scale: str | None = None
     product_source: str = "auto"
     mercado_livre_access_token: str | None = None
+    serpapi_api_key: str | None = None
+    google_shopping_country: str = "br"
+    google_shopping_language: str = "pt"
+    google_shopping_location: str = "Brazil"
+    google_shopping_max_queries: int = 15
     product_catalog_ttl_seconds: int = 900
     session_cookie_name: str = "producthunter_session"
     session_cookie_secure: bool = False
@@ -101,6 +106,11 @@ def get_settings() -> Settings:
         stripe_price_scale=getenv("STRIPE_PRICE_SCALE") or None,
         product_source=getenv("PRODUCT_SOURCE", "auto").strip().lower(),
         mercado_livre_access_token=getenv("MERCADO_LIVRE_ACCESS_TOKEN") or None,
+        serpapi_api_key=getenv("SERPAPI_API_KEY") or None,
+        google_shopping_country=getenv("GOOGLE_SHOPPING_COUNTRY", "br").strip().lower(),
+        google_shopping_language=getenv("GOOGLE_SHOPPING_LANGUAGE", "pt").strip().lower(),
+        google_shopping_location=getenv("GOOGLE_SHOPPING_LOCATION", "Brazil").strip(),
+        google_shopping_max_queries=_env_int("GOOGLE_SHOPPING_MAX_QUERIES", 15),
         product_catalog_ttl_seconds=int(getenv("PRODUCT_CATALOG_TTL_SECONDS", "900")),
         session_cookie_name=getenv("SESSION_COOKIE_NAME", "producthunter_session"),
         session_cookie_secure=session_cookie_secure,
