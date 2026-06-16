@@ -205,7 +205,7 @@ class HybridProductProvider:
             if catalog_products:
                 return self._ensure_catalog_coverage(catalog_products)
 
-        return self._fallback_products()
+        return self._fill_missing_product_images(self._fallback_products())
 
     def _fetch_google_shopping_products(self) -> list[Product]:
         api_key = self._settings.serpapi_api_key
@@ -289,11 +289,14 @@ class HybridProductProvider:
         return enriched
 
     def _fetch_google_image_urls(self, product: Product, limit: int) -> list[str]:
+        return self._fetch_google_image_urls_for_query(_image_search_query(product), limit)
+
+    def _fetch_google_image_urls_for_query(self, query: str, limit: int) -> list[str]:
         response = requests.get(
             SERPAPI_SEARCH_URL,
             params={
                 "engine": "google_images",
-                "q": f"{product.name} produto {product.niche_label}",
+                "q": query,
                 "api_key": self._settings.serpapi_api_key,
                 "gl": self._settings.google_shopping_country,
                 "hl": self._settings.google_shopping_language,
@@ -396,7 +399,53 @@ class HybridProductProvider:
             existing_ids.add(product.id)
             counts[key] = counts.get(key, 0) + 1
 
-        return _dedupe_products(covered_products)
+        return self._fill_missing_product_images(_dedupe_products(covered_products))
+
+    def _fill_missing_product_images(self, products: list[Product]) -> list[Product]:
+        per_product = max(1, min(self._settings.google_images_per_product, 5))
+        missing_images = [
+            product
+            for product in products
+            if not _usable_image_urls([*product.image_urls, product.image_url], limit=1)
+        ]
+        if not missing_images:
+            return products
+
+        api_key = self._settings.serpapi_api_key
+        if not api_key or not self._settings.google_images_enabled or per_product <= 1:
+            return [_with_image_gallery(product, product.image_urls or [product.image_url], limit=per_product) for product in products]
+
+        representative_by_query: dict[str, Product] = {}
+        for product in missing_images:
+            representative_by_query.setdefault(_image_search_query(product), product)
+
+        max_queries = max(1, min(self._settings.google_images_max_products, len(representative_by_query)))
+        selected_queries = list(representative_by_query)[:max_queries]
+        image_results: dict[str, list[str]] = {}
+
+        with ThreadPoolExecutor(max_workers=min(GOOGLE_IMAGES_MAX_WORKERS, max_queries)) as executor:
+            futures = {
+                executor.submit(self._fetch_google_image_urls_for_query, query, per_product): query
+                for query in selected_queries
+            }
+            for future in as_completed(futures):
+                query = futures[future]
+                try:
+                    image_results[query] = future.result()
+                except (requests.RequestException, TypeError, ValueError):
+                    image_results[query] = []
+
+        enriched: list[Product] = []
+        for product in products:
+            existing_images = _usable_image_urls([*product.image_urls, product.image_url], limit=per_product)
+            if existing_images:
+                enriched.append(_with_image_gallery(product, existing_images, limit=per_product))
+                continue
+
+            images = image_results.get(_image_search_query(product), [])
+            enriched.append(_with_image_gallery(product, images, limit=per_product))
+
+        return enriched
 
 
 @lru_cache(maxsize=1)
@@ -635,6 +684,20 @@ def _dedupe_products(products: list[Product]) -> list[Product]:
 def _with_image_gallery(product: Product, image_urls: list[str | None], limit: int = 3) -> Product:
     usable_urls = _usable_image_urls(image_urls, limit=limit)
     return product.model_copy(update={"image_url": usable_urls[0] if usable_urls else None, "image_urls": usable_urls})
+
+
+def _image_search_query(product: Product) -> str:
+    product_name = _clean_product_name_for_image_search(product.name)
+    return f"{product_name} {product.niche_label} produto foto"
+
+
+def _clean_product_name_for_image_search(value: str) -> str:
+    cleaned = value
+    labels = sorted(set(MARKETPLACE_LABELS.values()), key=len, reverse=True)
+    for label in labels:
+        cleaned = re.sub(re.escape(label), " ", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\b(google shopping|marketplace|produto)\b", " ", cleaned, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", cleaned).strip() or value.strip()
 
 
 def _usable_image_urls(values: list[Any], limit: int = 3) -> list[str]:

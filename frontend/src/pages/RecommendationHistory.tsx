@@ -338,7 +338,7 @@ function TopProductInsightRow({ product }: { product: RecommendationTopProductIn
   return (
     <div className="rounded-md border border-white/10 bg-white/[0.03] p-3">
       <div className="grid gap-3 sm:grid-cols-[52px_1fr_auto] sm:items-center">
-        <ProductImage product={{ name: product.product_name, image_url: product.image_url }} className="h-14 w-14" />
+        <ProductImage product={{ name: product.product_name, image_url: product.image_url, image_urls: product.image_urls }} className="h-14 w-14" />
         <div className="min-w-0">
           <p className="truncate font-black text-white">{product.product_name}</p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -421,7 +421,7 @@ function HistoryProductRow({ product }: { product: RecommendationHistoryProduct 
     <div className={product.rank === 1 ? "data-row-highlight p-4" : "data-row p-4"}>
       <div className="grid gap-4 md:grid-cols-[44px_64px_1fr_96px_96px_96px] md:items-center">
         <span className="font-mono text-sm font-black text-slate-500">#{product.rank}</span>
-        <ProductImage product={{ name: product.product_name, image_url: product.image_url }} className="h-16 w-16" />
+        <ProductImage product={{ name: product.product_name, image_url: product.image_url, image_urls: product.image_urls }} className="h-16 w-16" />
         <div className="min-w-0">
           <p className="truncate font-black text-white">{product.product_name}</p>
           <div className="mt-2 flex flex-wrap gap-2">
