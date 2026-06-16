@@ -44,7 +44,7 @@ $env:SESSION_COOKIE_SECURE="false"
 $env:CORS_ORIGINS="http://localhost:5173,http://127.0.0.1:5173"
 ```
 
-`ADMIN_EMAILS` aceita um ou mais e-mails separados por virgula. Quando uma conta Google com esse e-mail faz login, o backend marca o usuario como administrador em `users.is_admin`.
+`ADMIN_EMAILS` aceita um ou mais e-mails separados por virgula. Quando uma conta Google com esse e-mail faz login ou faz uma nova requisicao autenticada, o backend marca o usuario como administrador em `users.is_admin`.
 
 O SQLite e criado automaticamente em `backend/producthunter.db`. Para trocar para PostgreSQL:
 

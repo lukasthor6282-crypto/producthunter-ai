@@ -64,11 +64,23 @@ def verify_google_credential(credential: str) -> GoogleProfile:
     )
 
 
+def is_configured_admin_email(email: str | None) -> bool:
+    if not email:
+        return False
+    return email.strip().lower() in get_settings().admin_emails
+
+
+def sync_admin_access_from_settings(user: User) -> bool:
+    if is_configured_admin_email(user.email) and not user.is_admin:
+        user.is_admin = True
+        return True
+    return False
+
+
 def upsert_google_user(db: Session, profile: GoogleProfile) -> User:
-    settings = get_settings()
     now = utcnow()
     user = db.scalar(select(User).where(User.google_sub == profile.sub))
-    should_be_admin = profile.email.lower() in settings.admin_emails
+    should_be_admin = is_configured_admin_email(profile.email)
     if user is None:
         existing_email = db.scalar(select(User).where(User.email == profile.email))
         if existing_email is not None:
@@ -95,8 +107,7 @@ def upsert_google_user(db: Session, profile: GoogleProfile) -> User:
         user.locale = profile.locale
         user.email_verified = profile.email_verified
         user.last_login_at = now
-        if should_be_admin:
-            user.is_admin = True
+        sync_admin_access_from_settings(user)
 
     db.commit()
     db.refresh(user)
@@ -231,6 +242,7 @@ def get_valid_session(db: Session, raw_token: str | None) -> UserSession | None:
     if session is None or not session.user.is_active:
         return None
 
+    sync_admin_access_from_settings(session.user)
     session.last_seen_at = now
     db.commit()
     db.refresh(session)
