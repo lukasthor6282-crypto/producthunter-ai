@@ -39,9 +39,12 @@ http://127.0.0.1:8000/docs
 
 ```powershell
 $env:GOOGLE_CLIENT_ID="seu-client-id.apps.googleusercontent.com"
+$env:ADMIN_EMAILS="seu-email@gmail.com"
 $env:SESSION_COOKIE_SECURE="false"
 $env:CORS_ORIGINS="http://localhost:5173,http://127.0.0.1:5173"
 ```
+
+`ADMIN_EMAILS` aceita um ou mais e-mails separados por virgula. Quando uma conta Google com esse e-mail faz login, o backend marca o usuario como administrador em `users.is_admin`.
 
 O SQLite e criado automaticamente em `backend/producthunter.db`. Para trocar para PostgreSQL:
 
@@ -157,6 +160,16 @@ POST /auth/logout
 ```
 
 `/auth/google` recebe a credencial JWT retornada pelo Google Identity Services, valida o token no backend e cria uma sessao com cookie `HttpOnly`. Eventos de login e logout sao registrados em `security_audit_events`, e o usuario autenticado pode consultar os eventos recentes em `/auth/security-events`. As rotas de recomendacao, lucro, ML e analytics exigem login.
+
+### Administracao
+
+```http
+GET /admin/overview
+GET /admin/users
+PATCH /admin/users/{user_id}
+```
+
+Essas rotas exigem uma conta com `is_admin=true`. Use `ADMIN_EMAILS` no ambiente de producao para promover sua conta Google.
 
 ### Produtos
 

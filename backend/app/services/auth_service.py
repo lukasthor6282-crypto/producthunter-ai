@@ -65,8 +65,10 @@ def verify_google_credential(credential: str) -> GoogleProfile:
 
 
 def upsert_google_user(db: Session, profile: GoogleProfile) -> User:
+    settings = get_settings()
     now = utcnow()
     user = db.scalar(select(User).where(User.google_sub == profile.sub))
+    should_be_admin = profile.email.lower() in settings.admin_emails
     if user is None:
         existing_email = db.scalar(select(User).where(User.email == profile.email))
         if existing_email is not None:
@@ -82,6 +84,7 @@ def upsert_google_user(db: Session, profile: GoogleProfile) -> User:
             picture_url=profile.picture_url,
             locale=profile.locale,
             email_verified=profile.email_verified,
+            is_admin=should_be_admin,
             last_login_at=now,
         )
         db.add(user)
@@ -92,6 +95,8 @@ def upsert_google_user(db: Session, profile: GoogleProfile) -> User:
         user.locale = profile.locale
         user.email_verified = profile.email_verified
         user.last_login_at = now
+        if should_be_admin:
+            user.is_admin = True
 
     db.commit()
     db.refresh(user)

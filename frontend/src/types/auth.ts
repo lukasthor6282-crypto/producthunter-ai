@@ -4,6 +4,7 @@ export type AuthUser = {
   name: string | null;
   picture_url: string | null;
   email_verified: boolean;
+  is_admin: boolean;
   created_at: string;
   last_login_at: string | null;
 };

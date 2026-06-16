@@ -21,14 +21,17 @@ import {
   SlidersHorizontal,
   Sparkles,
   UserCircle2,
+  Users,
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 
+import { useAdminOverview, useAdminUsers } from "../hooks/useAdmin";
 import { useBilling } from "../hooks/useBilling";
 import { useSecurityAuditEvents } from "../hooks/useSecurityAuditEvents";
 import { useSecuritySessions } from "../hooks/useSecuritySessions";
+import type { AdminOverview, AdminUser, AdminUserUpdate } from "../services/adminApi";
 import { brl } from "../services/format";
 import type { AuthUser, SecurityAuditEvent, SecuritySession } from "../types/auth";
 import type { BillingPlan, SubscriptionStatus } from "../types/billing";
@@ -39,7 +42,7 @@ type AccountPageProps = {
   isLoggingOut?: boolean;
 };
 
-type AccountTab = "profile" | "data" | "settings" | "security" | "plans";
+type AccountTab = "profile" | "data" | "settings" | "security" | "plans" | "admin";
 
 type AccountSettings = {
   productAlerts: boolean;
@@ -67,6 +70,7 @@ const accountTabs: Array<{ key: AccountTab; label: string; icon: ComponentType<{
   { key: "settings", label: "Configuracoes", icon: SlidersHorizontal },
   { key: "security", label: "Seguranca", icon: ShieldCheck },
   { key: "plans", label: "Planos", icon: CreditCard },
+  { key: "admin", label: "Admin", icon: Crown },
 ];
 
 const planIcons: Record<BillingPlan["slug"], ComponentType<{ size?: number; className?: string }>> = {
@@ -93,6 +97,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
 export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) {
   const [activeTab, setActiveTab] = useState<AccountTab>("profile");
   const [settings, setSettings] = useState<AccountSettings>(() => readAccountSettings());
+  const adminTabEnabled = Boolean(user?.is_admin) && activeTab === "admin";
   const {
     plans,
     subscription,
@@ -121,6 +126,23 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
     revokingSessionId,
     isRevokingOtherSessions,
   } = useSecuritySessions(Boolean(user) && activeTab === "security");
+  const {
+    overview: adminOverview,
+    isLoading: isAdminOverviewLoading,
+    isFetching: isAdminOverviewFetching,
+    error: adminOverviewError,
+    refetch: refetchAdminOverview,
+  } = useAdminOverview(adminTabEnabled);
+  const {
+    users: adminUsers,
+    isLoading: isAdminUsersLoading,
+    isFetching: isAdminUsersFetching,
+    error: adminUsersError,
+    refetch: refetchAdminUsers,
+    updateUser: updateAdminUser,
+    updatingUserId,
+    updateError: adminUpdateError,
+  } = useAdminUsers(adminTabEnabled);
 
   useEffect(() => {
     storeAccountSettings(settings);
@@ -131,6 +153,10 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
   const planLimit = subscription?.monthly_recommendations ?? currentPlanDetails?.monthly_recommendations ?? 10;
   const planProducts = subscription?.max_results_per_analysis ?? currentPlanDetails?.max_results_per_analysis ?? 8;
   const planSeats = currentPlanDetails?.seats ?? 1;
+  const visibleAccountTabs = useMemo(
+    () => accountTabs.filter((tab) => tab.key !== "admin" || user?.is_admin),
+    [user?.is_admin],
+  );
 
   const accountHealth = useMemo(() => {
     const checks = [
@@ -199,8 +225,8 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
         <AccountMetric icon={<BadgeCheck size={19} />} label="Usuarios" value={String(planSeats)} detail="assentos incluidos" tone="orange" />
       </section>
 
-      <div className="mb-6 grid gap-2 rounded-lg border border-white/10 bg-white/[0.035] p-2 sm:grid-cols-2 lg:grid-cols-5">
-        {accountTabs.map((tab) => {
+      <div className={`mb-6 grid gap-2 rounded-lg border border-white/10 bg-white/[0.035] p-2 sm:grid-cols-2 ${visibleAccountTabs.length > 5 ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}>
+        {visibleAccountTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
           return (
@@ -259,6 +285,25 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
         />
       )}
 
+      {activeTab === "admin" && user?.is_admin && (
+        <AdminTab
+          overview={adminOverview}
+          users={adminUsers}
+          currentUserId={user.id}
+          isOverviewLoading={isAdminOverviewLoading}
+          isOverviewFetching={isAdminOverviewFetching}
+          isUsersLoading={isAdminUsersLoading}
+          isUsersFetching={isAdminUsersFetching}
+          error={adminOverviewError ?? adminUsersError ?? adminUpdateError}
+          updatingUserId={updatingUserId}
+          onRefresh={() => {
+            void refetchAdminOverview();
+            void refetchAdminUsers();
+          }}
+          onUpdateUser={(userId, payload) => void updateAdminUser({ userId, payload })}
+        />
+      )}
+
       {activeTab === "plans" && (
         <PlansTab
           plans={plans}
@@ -272,6 +317,135 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
         />
       )}
     </div>
+  );
+}
+
+function AdminTab({
+  overview,
+  users,
+  currentUserId,
+  isOverviewLoading,
+  isOverviewFetching,
+  isUsersLoading,
+  isUsersFetching,
+  error,
+  updatingUserId,
+  onRefresh,
+  onUpdateUser,
+}: {
+  overview: AdminOverview | null;
+  users: AdminUser[];
+  currentUserId: number;
+  isOverviewLoading: boolean;
+  isOverviewFetching: boolean;
+  isUsersLoading: boolean;
+  isUsersFetching: boolean;
+  error: string | null;
+  updatingUserId: number | null;
+  onRefresh: () => void;
+  onUpdateUser: (userId: number, payload: AdminUserUpdate) => void;
+}) {
+  const loading = isOverviewLoading || isUsersLoading;
+  const fetching = isOverviewFetching || isUsersFetching;
+
+  return (
+    <div className="grid gap-4">
+      <section className="grid gap-4 lg:grid-cols-4">
+        <AccountMetric icon={<Users size={19} />} label="Usuarios" value={loading ? "..." : String(overview?.total_users ?? 0)} detail="contas criadas" tone="cyan" />
+        <AccountMetric icon={<BadgeCheck size={19} />} label="Ativos" value={loading ? "..." : String(overview?.active_users ?? 0)} detail="podem acessar" tone="green" />
+        <AccountMetric icon={<Crown size={19} />} label="Admins" value={loading ? "..." : String(overview?.admin_users ?? 0)} detail="controle total" tone="orange" />
+        <AccountMetric icon={<Sparkles size={19} />} label="Analises" value={loading ? "..." : String(overview?.total_recommendation_runs ?? 0)} detail="geradas no app" tone="cyan" />
+      </section>
+
+      <section className="kombai-card p-5">
+        <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-black text-white">Controle de usuarios</h2>
+            <p className="mt-1 text-sm text-slate-500">Gerencie acesso, status e permissoes administrativas.</p>
+          </div>
+          <button type="button" className="kombai-btn" onClick={onRefresh} disabled={fetching}>
+            <RefreshCw size={16} className={fetching ? "animate-spin" : undefined} />
+            Atualizar
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-ember/30 bg-ember/10 p-4 text-sm font-semibold text-ember">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="rounded-lg border border-white/10 bg-white/[0.035] p-5 text-sm font-bold text-slate-400">
+            Carregando usuarios...
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {users.map((adminUser) => (
+              <AdminUserRow
+                key={adminUser.id}
+                user={adminUser}
+                isCurrentUser={adminUser.id === currentUserId}
+                isUpdating={updatingUserId === adminUser.id}
+                onUpdateUser={onUpdateUser}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function AdminUserRow({
+  user,
+  isCurrentUser,
+  isUpdating,
+  onUpdateUser,
+}: {
+  user: AdminUser;
+  isCurrentUser: boolean;
+  isUpdating: boolean;
+  onUpdateUser: (userId: number, payload: AdminUserUpdate) => void;
+}) {
+  return (
+    <article className="data-row grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="break-words font-black text-white">{user.name ?? "Cliente ProductHunter"}</h3>
+          {isCurrentUser && <span className="kombai-chip kombai-chip-cyan">Voce</span>}
+          {user.is_admin && <span className="kombai-chip kombai-chip-orange">Admin</span>}
+          <span className={user.is_active ? "kombai-chip kombai-chip-green" : "kombai-chip kombai-chip-orange"}>
+            {user.is_active ? "Ativo" : "Inativo"}
+          </span>
+        </div>
+        <p className="mt-2 break-all text-sm font-semibold text-slate-400">{user.email}</p>
+        <p className="mt-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-600">
+          Criado em {formatDateTime(user.created_at)} · Ultimo login {formatDateTime(user.last_login_at)}
+        </p>
+      </div>
+
+      <div className="grid gap-2 min-[460px]:grid-cols-2 lg:min-w-[300px]">
+        <button
+          type="button"
+          className="kombai-btn min-h-11 px-3"
+          disabled={isUpdating || (isCurrentUser && user.is_admin)}
+          onClick={() => onUpdateUser(user.id, { is_admin: !user.is_admin })}
+        >
+          <Crown size={15} />
+          {isUpdating ? "Salvando..." : user.is_admin ? "Remover admin" : "Tornar admin"}
+        </button>
+        <button
+          type="button"
+          className="kombai-btn min-h-11 border-ember/30 bg-ember/10 px-3 text-ember"
+          disabled={isUpdating || isCurrentUser}
+          onClick={() => onUpdateUser(user.id, { is_active: !user.is_active })}
+        >
+          <ShieldAlert size={15} />
+          {isUpdating ? "Salvando..." : user.is_active ? "Desativar" : "Ativar"}
+        </button>
+      </div>
+    </article>
   );
 }
 
@@ -306,6 +480,12 @@ function ProfileTab({
               <CreditCard size={14} />
               {planName(currentPlan)}
             </span>
+            {user?.is_admin && (
+              <span className="kombai-chip kombai-chip-orange">
+                <Crown size={14} />
+                Administrador
+              </span>
+            )}
           </div>
         </div>
 
@@ -391,6 +571,7 @@ function DataTab({
           <DataRow icon={<UserCircle2 size={17} />} label="Nome" value={user?.name ?? "Nao informado"} />
           <DataRow icon={<Mail size={17} />} label="E-mail" value={user?.email ?? "Nao informado"} />
           <DataRow icon={<BadgeCheck size={17} />} label="Verificacao" value={user?.email_verified ? "E-mail verificado" : "Pendente"} />
+          <DataRow icon={<Crown size={17} />} label="Permissao" value={user?.is_admin ? "Administrador" : "Cliente"} />
           <DataRow icon={<CalendarDays size={17} />} label="Conta criada" value={formatDateTime(user?.created_at)} />
           <DataRow icon={<KeyRound size={17} />} label="Ultimo login" value={formatDateTime(user?.last_login_at)} />
           <DataRow icon={<CreditCard size={17} />} label="Plano atual" value={planName(currentPlan)} />

@@ -35,3 +35,9 @@ def get_current_session(request: Request, db: Session = Depends(get_db)) -> User
 
 def get_current_user(session: UserSession = Depends(get_current_session)) -> User:
     return session.user
+
+
+def get_current_admin_user(user: User = Depends(get_current_user)) -> User:
+    if not user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso de administrador necessario.")
+    return user

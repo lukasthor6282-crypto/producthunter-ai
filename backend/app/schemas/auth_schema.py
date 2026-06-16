@@ -11,6 +11,7 @@ class AuthUser(BaseModel):
     name: str | None = None
     picture_url: str | None = None
     email_verified: bool
+    is_admin: bool = False
     created_at: datetime
     last_login_at: datetime | None = None
 

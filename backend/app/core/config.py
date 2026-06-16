@@ -3,7 +3,7 @@ from os import getenv
 from pathlib import Path
 
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -21,6 +21,13 @@ def _env_int(name: str, default: int) -> int:
         return int(value)
     except ValueError:
         return default
+
+
+def _env_list(name: str) -> list[str]:
+    value = getenv(name)
+    if not value:
+        return []
+    return [item.strip().lower() for item in value.split(",") if item.strip()]
 
 
 def _normalize_database_url(url: str) -> str:
@@ -62,6 +69,7 @@ class Settings(BaseModel):
     auth_rate_limit_window_seconds: int = 60
     recommendation_rate_limit_count: int = 30
     recommendation_rate_limit_window_seconds: int = 60
+    admin_emails: list[str] = Field(default_factory=list)
     cors_origins: list[str]
 
     @property
@@ -129,5 +137,6 @@ def get_settings() -> Settings:
         auth_rate_limit_window_seconds=_env_int("AUTH_RATE_LIMIT_WINDOW_SECONDS", 60),
         recommendation_rate_limit_count=_env_int("RECOMMENDATION_RATE_LIMIT_COUNT", 30),
         recommendation_rate_limit_window_seconds=_env_int("RECOMMENDATION_RATE_LIMIT_WINDOW_SECONDS", 60),
+        admin_emails=_env_list("ADMIN_EMAILS"),
         cors_origins=cors_origins,
     )
