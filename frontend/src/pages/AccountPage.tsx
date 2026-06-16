@@ -94,6 +94,9 @@ const dateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
   minute: "2-digit",
 });
 
+const adminMonthlyRecommendationLimit = 999_999;
+const adminMaxResultsPerAnalysis = 30;
+
 export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) {
   const [activeTab, setActiveTab] = useState<AccountTab>("profile");
   const [settings, setSettings] = useState<AccountSettings>(() => readAccountSettings());
@@ -148,11 +151,12 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
     storeAccountSettings(settings);
   }, [settings]);
 
-  const currentPlan = subscription?.is_active ? subscription.plan_slug : "free";
-  const currentPlanDetails = plans.find((plan) => plan.slug === currentPlan);
-  const planLimit = subscription?.monthly_recommendations ?? currentPlanDetails?.monthly_recommendations ?? 10;
-  const planProducts = subscription?.max_results_per_analysis ?? currentPlanDetails?.max_results_per_analysis ?? 8;
-  const planSeats = currentPlanDetails?.seats ?? 1;
+  const isAdminAccount = Boolean(user?.is_admin);
+  const currentPlan = isAdminAccount ? "admin" : subscription?.is_active ? subscription.plan_slug : "free";
+  const currentPlanDetails = isAdminAccount ? undefined : plans.find((plan) => plan.slug === currentPlan);
+  const planLimit = isAdminAccount ? adminMonthlyRecommendationLimit : subscription?.monthly_recommendations ?? currentPlanDetails?.monthly_recommendations ?? 10;
+  const planProducts = isAdminAccount ? adminMaxResultsPerAnalysis : subscription?.max_results_per_analysis ?? currentPlanDetails?.max_results_per_analysis ?? 8;
+  const planSeats = isAdminAccount ? "Todos" : String(currentPlanDetails?.seats ?? 1);
   const visibleAccountTabs = useMemo(
     () => accountTabs.filter((tab) => tab.key !== "admin" || user?.is_admin),
     [user?.is_admin],
@@ -219,10 +223,10 @@ export function AccountPage({ user, onLogout, isLoggingOut }: AccountPageProps) 
       </header>
 
       <section className="mb-5 grid gap-4 lg:grid-cols-4">
-        <AccountMetric icon={<CreditCard size={19} />} label="Plano atual" value={planName(currentPlan)} detail={subscription?.is_active ? friendlyStatus(subscription.status) : "Conta gratuita"} tone="cyan" />
-        <AccountMetric icon={<Sparkles size={19} />} label="Analises mensais" value={planLimit.toLocaleString("pt-BR")} detail="limite do plano" tone="green" />
+        <AccountMetric icon={<CreditCard size={19} />} label="Plano atual" value={planName(currentPlan)} detail={isAdminAccount ? "Acesso administrativo" : subscription?.is_active ? friendlyStatus(subscription.status) : "Conta gratuita"} tone="cyan" />
+        <AccountMetric icon={<Sparkles size={19} />} label="Analises mensais" value={planLimit.toLocaleString("pt-BR")} detail={isAdminAccount ? "sem bloqueio mensal" : "limite do plano"} tone="green" />
         <AccountMetric icon={<Database size={19} />} label="Produtos/analise" value={String(planProducts)} detail="por consulta" tone="cyan" />
-        <AccountMetric icon={<BadgeCheck size={19} />} label="Usuarios" value={String(planSeats)} detail="assentos incluidos" tone="orange" />
+        <AccountMetric icon={<BadgeCheck size={19} />} label="Usuarios" value={planSeats} detail={isAdminAccount ? "controle administrativo" : "assentos incluidos"} tone="orange" />
       </section>
 
       <div className={`mb-6 grid gap-2 rounded-lg border border-white/10 bg-white/[0.035] p-2 sm:grid-cols-2 ${visibleAccountTabs.length > 5 ? "lg:grid-cols-6" : "lg:grid-cols-5"}`}>
@@ -1293,6 +1297,7 @@ function formatDateTime(value?: string | null) {
 }
 
 function planName(slug: string) {
+  if (slug === "admin") return "Admin";
   if (slug === "starter") return "Starter";
   if (slug === "pro") return "Pro";
   if (slug === "scale") return "Scale";

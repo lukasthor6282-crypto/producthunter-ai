@@ -15,9 +15,10 @@ type RecommendationProfileProps = {
 
 export function RecommendationProfile({ onGenerate, isLoading, onOpenPlans, quotaError, onClearQuotaError }: RecommendationProfileProps) {
   const { usage, isLoading: isUsageLoading, error: usageError, refetch: refetchUsage } = useRecommendationUsage();
+  const isAdminUsage = usage?.plan_slug === "admin";
   const usagePercent = usage ? Math.min(100, usage.usage_percent) : 0;
-  const limitReached = Boolean(usage?.limit_reached);
-  const shouldBlockForm = limitReached || quotaError?.code === "PLAN_MONTHLY_LIMIT_REACHED";
+  const limitReached = !isAdminUsage && Boolean(usage?.limit_reached);
+  const shouldBlockForm = !isAdminUsage && (limitReached || quotaError?.code === "PLAN_MONTHLY_LIMIT_REACHED");
 
   return (
     <div className="min-h-screen py-6 md:py-10">
@@ -99,7 +100,9 @@ export function RecommendationProfile({ onGenerate, isLoading, onOpenPlans, quot
               </div>
               <p className="mt-2 text-sm leading-6 text-slate-400">
                 {usage
-                  ? `${usage.generated_count} de ${usage.monthly_limit} analises usadas em ${usage.period_month}. Restam ${usage.remaining}.`
+                  ? isAdminUsage
+                    ? `Acesso Admin ativo em ${usage.period_month}. Analises administrativas liberadas.`
+                    : `${usage.generated_count} de ${usage.monthly_limit} analises usadas em ${usage.period_month}. Restam ${usage.remaining}.`
                   : isUsageLoading
                     ? "Buscando seus limites mensais..."
                     : usageError ?? "Nao foi possivel carregar o uso agora."}
@@ -113,10 +116,17 @@ export function RecommendationProfile({ onGenerate, isLoading, onOpenPlans, quot
                 <p className="font-mono text-3xl font-black text-white">{usage?.remaining ?? "--"}</p>
                 <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">analises restantes</p>
               </div>
-              <button type="button" className={limitReached ? "kombai-btn kombai-btn-solid" : "kombai-btn"} onClick={onOpenPlans}>
-                <Sparkles size={16} />
-                {limitReached ? "Fazer upgrade" : "Ver planos"}
-              </button>
+              {isAdminUsage ? (
+                <span className="kombai-chip kombai-chip-orange">
+                  <Sparkles size={14} />
+                  Admin ativo
+                </span>
+              ) : (
+                <button type="button" className={limitReached ? "kombai-btn kombai-btn-solid" : "kombai-btn"} onClick={onOpenPlans}>
+                  <Sparkles size={16} />
+                  {limitReached ? "Fazer upgrade" : "Ver planos"}
+                </button>
+              )}
             </div>
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
               <div
@@ -126,7 +136,7 @@ export function RecommendationProfile({ onGenerate, isLoading, onOpenPlans, quot
             </div>
             {usage && (
               <p className="mt-2 text-right text-xs font-semibold text-slate-500">
-                Ate {usage.max_results_per_analysis} produtos por analise.
+                {isAdminUsage ? "Cota administrativa sem bloqueio mensal." : `Ate ${usage.max_results_per_analysis} produtos por analise.`}
               </p>
             )}
           </div>

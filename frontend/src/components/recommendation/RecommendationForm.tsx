@@ -134,6 +134,7 @@ export function RecommendationForm({ onSubmit, isLoading = false, disabled = fal
   });
 
   const selected = watch();
+  const isAdminUsage = usage?.plan_slug === "admin";
 
   const setField = (field: keyof UserProfile, value: string) => {
     setValue(field, value, { shouldDirty: true, shouldValidate: true });
@@ -298,8 +299,9 @@ export function RecommendationForm({ onSubmit, isLoading = false, disabled = fal
           <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4 text-sm font-semibold text-slate-400">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <span>
-                Plano {usage.plan_name}: {usage.generated_count} de {usage.monthly_limit} analises usadas. Ate{" "}
-                {usage.max_results_per_analysis} produtos por analise.
+                {isAdminUsage
+                  ? `Plano ${usage.plan_name}: acesso administrativo sem bloqueio mensal. Ate ${usage.max_results_per_analysis} produtos por analise.`
+                  : `Plano ${usage.plan_name}: ${usage.generated_count} de ${usage.monthly_limit} analises usadas. Ate ${usage.max_results_per_analysis} produtos por analise.`}
               </span>
               {disabled && onUpgrade && (
                 <button type="button" className="kombai-btn min-h-10 shrink-0" onClick={onUpgrade}>

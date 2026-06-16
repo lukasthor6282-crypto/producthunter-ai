@@ -22,6 +22,9 @@ from app.schemas.recommendation_schema import (
 )
 from app.services.billing_service import active_plan_slug, plan_limits
 
+ADMIN_MONTHLY_RECOMMENDATION_LIMIT = 999_999
+ADMIN_MAX_RESULTS_PER_ANALYSIS = 30
+
 
 def current_period_month(now: datetime | None = None) -> str:
     now = now or datetime.now(timezone.utc)
@@ -29,11 +32,21 @@ def current_period_month(now: datetime | None = None) -> str:
 
 
 def monthly_recommendation_limit(db: Session, user: User) -> int:
+    if user.is_admin:
+        return ADMIN_MONTHLY_RECOMMENDATION_LIMIT
     limits = plan_limits(active_plan_slug(db, user))
     return int(limits["monthly_recommendations"])
 
 
 def recommendation_plan_limits(db: Session, user: User) -> dict:
+    if user.is_admin:
+        return {
+            "plan_slug": "admin",
+            "plan_name": "Admin",
+            "monthly_recommendations": ADMIN_MONTHLY_RECOMMENDATION_LIMIT,
+            "max_results_per_analysis": ADMIN_MAX_RESULTS_PER_ANALYSIS,
+            "history_retention_days": 3650,
+        }
     return plan_limits(active_plan_slug(db, user))
 
 
@@ -56,6 +69,8 @@ def get_or_create_usage(db: Session, user: User, period_month: str | None = None
 
 def increment_recommendation_usage(db: Session, user: User) -> RecommendationUsage:
     usage = get_or_create_usage(db, user)
+    if user.is_admin:
+        return usage
     usage.generated_count += 1
     usage.last_generated_at = datetime.now(timezone.utc)
     return usage
@@ -66,7 +81,13 @@ def recommendation_usage_status(db: Session, user: User) -> RecommendationUsageR
     limits = recommendation_plan_limits(db, user)
     monthly_limit = int(limits["monthly_recommendations"])
     remaining = max(0, monthly_limit - usage.generated_count)
-    usage_percent = round(min(100, (usage.generated_count / monthly_limit) * 100), 2) if monthly_limit else 100.0
+    usage_percent = (
+        0.0
+        if user.is_admin
+        else round(min(100, (usage.generated_count / monthly_limit) * 100), 2)
+        if monthly_limit
+        else 100.0
+    )
     return RecommendationUsageResponse(
         period_month=usage.period_month,
         plan_slug=str(limits["plan_slug"]),
@@ -76,8 +97,8 @@ def recommendation_usage_status(db: Session, user: User) -> RecommendationUsageR
         remaining=remaining,
         max_results_per_analysis=int(limits["max_results_per_analysis"]),
         usage_percent=usage_percent,
-        limit_reached=remaining <= 0,
-        upgrade_recommended=remaining <= max(1, int(monthly_limit * 0.1)),
+        limit_reached=False if user.is_admin else remaining <= 0,
+        upgrade_recommended=False if user.is_admin else remaining <= max(1, int(monthly_limit * 0.1)),
     )
 
 
